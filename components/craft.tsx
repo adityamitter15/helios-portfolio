@@ -1,9 +1,11 @@
 "use client";
 
 import {
+  useEffect,
+  useRef,
   useState,
   type ComponentType,
-  type PointerEvent as ReactPointerEvent,
+  type CSSProperties,
   type SVGProps,
 } from "react";
 import {
@@ -14,12 +16,11 @@ import {
   SmartphoneIcon,
   TapIcon,
 } from "@/components/ui/icons";
-import { Glass } from "@/components/ui/glass";
 import { Reveal } from "@/components/ui/reveal";
 import { useSpring } from "@/lib/motion/use-spring";
 import { useReducedMotion } from "@/lib/motion/use-reduced-motion";
 
-/** The six "what you get" cards, docs/DESIGN-SPEC.md section 5, copy used verbatim. */
+/** The six "what you get" items, docs/DESIGN-SPEC.md section 5, copy used verbatim. */
 const CARDS: { icon: ComponentType<SVGProps<SVGSVGElement>>; title: string; body: string }[] = [
   {
     icon: PencilIcon,
@@ -53,44 +54,81 @@ const CARDS: { icon: ComponentType<SVGProps<SVGSVGElement>>; title: string; body
   },
 ];
 
-// Press feels instant (damping 1, a short response), the release settles with a touch of life
-// (damping 0.8) since it is the end of a gesture, not an appearance, per the apple-design skill.
-const PRESS = { damping: 1, response: 0.15 };
-const RELEASE = { damping: 0.8, response: 0.3 };
+// Deliberately more pronounced than the generic Reveal used elsewhere on the page: a longer step
+// between items and real horizontal travel, so the arrival reads as a sequence you can follow
+// rather than a group fading in together.
+const STAGGER_MS = 110;
+const TRAVEL_PX = 56;
+const ENTRANCE_SPRING = { damping: 1, response: 0.65 }; // critically damped: an entrance, not a gesture
 
-function CraftCard({ icon: Icon, title, body }: (typeof CARDS)[number]) {
+interface CraftItemProps {
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  title: string;
+  body: string;
+  index: number;
+}
+
+/**
+ * One "what you get" item. No panel, no border, no fill: open space and the type doing the work,
+ * per the repeated feedback that the card grid read as boxy. In place of a surface, the entrance
+ * itself carries the choreography, alternating in from the left and right by grid column parity
+ * (even index from the left, odd from the right) so the six items arrive as a visible left-right
+ * cascade rather than the plain fade the generic Reveal gives everywhere else on the page.
+ */
+function CraftItem({ icon: Icon, title, body, index }: CraftItemProps) {
   const reduced = useReducedMotion();
-  const [pressed, setPressed] = useState(false);
-  const scale = useSpring(pressed ? 0.97 : 1, { ...(pressed ? PRESS : RELEASE), immediate: reduced });
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const fromLeft = index % 2 === 0;
 
-  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    setPressed(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-  const onPointerUp = () => setPressed(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || visible) return;
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          timer = setTimeout(() => setVisible(true), index * STAGGER_MS);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    observer.observe(el);
+
+    return () => {
+      observer.disconnect();
+      if (timer) clearTimeout(timer);
+    };
+  }, [index, visible]);
+
+  // A single spring drives entrance progress (0..1); opacity and the horizontal travel are both
+  // derived from it, so the fade and the slide resolve together rather than needing two springs
+  // kept in sync by hand.
+  const progress = useSpring(visible ? 1 : 0, { ...ENTRANCE_SPRING, immediate: reduced });
+
+  const style: CSSProperties = reduced
+    ? { opacity: visible ? 1 : 0, transition: "opacity 300ms ease" }
+    : {
+        opacity: progress.value,
+        transform: `translateX(${(1 - progress.value) * (fromLeft ? -TRAVEL_PX : TRAVEL_PX)}px)`,
+      };
 
   return (
-    <div
-      onPointerDown={onPointerDown}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      style={reduced ? undefined : { transform: `scale(${scale.value})`, willChange: "transform" }}
-      className="h-full"
-    >
-      <Glass className="flex h-full flex-col gap-4 p-6 sm:p-7">
-        <Icon className="h-6 w-6 shrink-0 text-accent" />
-        <h3 className="text-h3 text-text">{title}</h3>
-        <p className="text-body text-text-2">{body}</p>
-      </Glass>
+    <div ref={ref} style={style} className="flex flex-col gap-4">
+      <Icon className="h-6 w-6 shrink-0 text-accent" />
+      <h3 className="text-h3 text-text">{title}</h3>
+      <p className="text-body text-text-2">{body}</p>
     </div>
   );
 }
 
 /**
- * Craft: the six "what you get" cards, docs/DESIGN-SPEC.md section 5, copy used verbatim.
- * Staggered reveal via Reveal, plus a per-card press feedback spring that reacts on pointerdown
- * (section 4.2: "feedback on pointerdown, never on click"), even though the cards themselves
- * carry no link, purely as the tactile, physical affordance the apple-design skill asks for.
+ * Craft: the six "what you get" items, docs/DESIGN-SPEC.md section 5, copy used verbatim. The
+ * heading uses the shared Reveal (plain rise and fade, correct for a single line of type); the
+ * six items below choreograph their own alternating left/right entrance in CraftItem instead,
+ * since a plain fade was repeatedly called out as not enough for a group this size.
  */
 export function Craft() {
   return (
@@ -103,11 +141,11 @@ export function Craft() {
           </p>
         </Reveal>
 
-        <Reveal startIndex={2} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {CARDS.map((card) => (
-            <CraftCard key={card.title} {...card} />
+        <div className="grid gap-x-10 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
+          {CARDS.map((card, index) => (
+            <CraftItem key={card.title} {...card} index={index} />
           ))}
-        </Reveal>
+        </div>
       </div>
     </section>
   );
