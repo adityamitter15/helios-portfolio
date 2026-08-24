@@ -22,10 +22,10 @@ import { useReducedMotion } from "@/lib/motion/use-reduced-motion";
 // Mirror --color-text-2 and --color-text from app/globals.css. useTransform needs concrete colour
 // values to interpolate between (a CSS custom property string can't be tweened), so these are
 // pinned here rather than read live. Keep in sync with globals.css if the tokens ever change.
-const COLOR_MUTED = "#a9b6e8"; // --color-text-2
-const COLOR_FULL = "#eef2ff"; // --color-text
+const COLOR_MUTED = "#8a99bd"; // muted start, 3.6:1 on white: faint but never illegible
+const COLOR_FULL = "#0a1a33"; // --color-text, 17.4:1 on white
 
-const BLUR_START = "blur(8px)";
+const BLUR_START = "blur(5px)";
 const BLUR_END = "blur(0px)";
 const SCALE_START = 0.94;
 const SCALE_END = 1;
