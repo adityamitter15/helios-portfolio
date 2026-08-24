@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { EclipseMark } from "@/components/ui/eclipse-mark";
 import { Magnetic } from "@/components/ui/magnetic";
 import { useReducedMotion } from "@/lib/motion/use-reduced-motion";
 import { useScrollProgress } from "@/lib/motion/use-scroll-progress";
@@ -22,28 +22,6 @@ import { WHATSAPP_HREF } from "@/lib/contact";
  * settle reads as something with mass rather than a quick fade. This is the one moment on the
  * page that has to feel cinematic.
  */
-
-/** Cuts the render down to the mark itself, discarding its square frame.
- *
- *  On the daylight ground this is a near-hard circular cut rather than the soft feather the dark
- *  themes used, and the reasoning is worth keeping. The render is a chrome ring around a dark disc
- *  on a dark ground. On a dark page you hide the frame by screen-blending it away; on white that is
- *  exactly wrong, because screen against white returns white and the entire mark disappears. So the
- *  frame has to be cut geometrically instead.
- *
- *  The stops are measured, not guessed. Sampling the render's radial luminance puts the bright
- *  chrome ring between 68% and 76% of the radius, the dark disc inside 64%, and the discardable
- *  frame beyond 80%. So the cut sits at 78 to 84%: the ring survives whole, and everything outside
- *  it goes. Cutting anywhere below 68% slices the ring off and leaves a plain grey disc, which is
- *  exactly what a guessed value produced first time round. A soft feather is wrong here too, it
- *  leaves a grey haze bleeding onto the white that reads as a rendering fault. */
-// `closest-side` matters: without it a radial gradient sizes to the farthest corner, so a stop
-// written as 78% actually lands at 78% of the corner distance, about 1.1x the half-width, which
-// falls outside the image and rounds the square's corners instead of cutting a circle. With
-// closest-side, 100% is the half-width, so these percentages mean what the measurement meant.
-const MARK_MASK =
-  "radial-gradient(circle closest-side at 50% 50%, #000 78%, rgba(0, 0, 0, 0.5) 81%, transparent 84%)";
-const MARK_SRC = "/brand/mark-eclipse.png";
 
 const RISE_PX = 56; // dramatically larger travel than a routine 16px section reveal
 const ENTRANCE_SPRING = { damping: 1, response: 0.85 }; // slow settle reads as weight, not a fade
@@ -130,27 +108,15 @@ export function Hero() {
           reorder the markup. */}
       <div className="relative z-10 flex w-full flex-col gap-10 sm:flex-row-reverse sm:items-center sm:justify-between sm:gap-10 lg:gap-16">
         <div
-          className="relative aspect-square w-[52vw] max-w-[280px] shrink-0 self-end opacity-70
-            sm:w-[34%] sm:max-w-[380px] sm:self-center sm:opacity-100 sm:mr-[-4%]
-            md:w-[36%] md:max-w-[440px] md:mr-[-6%]
-            lg:w-[32%] lg:max-w-[560px] lg:mr-[-10%]
-            xl:max-w-[640px] xl:mr-[-14%]"
+          className="relative aspect-square w-[56vw] max-w-[300px] shrink-0 self-center
+            sm:w-[34%] sm:max-w-[360px]
+            md:w-[36%] md:max-w-[420px]
+            lg:w-[34%] lg:max-w-[500px]
+            xl:max-w-[560px]"
         >
-          <Image
-            src={MARK_SRC}
-            alt=""
-            width={1024}
-            height={1024}
-            priority
-            sizes="(min-width: 1024px) 640px, 52vw"
+          <EclipseMark
             className="pointer-events-none absolute inset-0 h-full w-full select-none"
-            style={{
-              // No blend mode on the light ground. Screen would erase the mark entirely against
-              // white; the circular mask above is what removes the render's frame instead.
-              maskImage: MARK_MASK,
-              WebkitMaskImage: MARK_MASK,
-              ...markStyle,
-            }}
+            style={markStyle}
           />
         </div>
 
