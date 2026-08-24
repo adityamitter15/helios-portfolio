@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+/*
+  HELIOS design tokens. Deep ink and liquid chrome (docs/DESIGN-SPEC.md section 2 and 3).
+  Tailwind v4 CSS-first configuration: every token below becomes a utility automatically
+  (--color-void => bg-void / text-void / border-void, --text-hero => text-hero, and so on).
+  Do not invent new colours here. Do not use pure black.
+*/
+@theme {
+  /* Colour tokens, contrast pairs already verified against --void, see the spec, do not re-derive */
+  --color-void: #08090c;
+  --color-surface: #0f1116;
+  --color-surface-2: #161922;
+  --color-line: #232734;
+  --color-chrome-hi: #e8eef7;
+  --color-chrome-mid: #9aa7bd;
+  --color-chrome-lo: #3a4152;
+  --color-accent: #5b8cff;
+  --color-accent-hi: #a8c0ff;
+  --color-glow: #c8d4ff;
+  --color-text: #f2f4f8;
+  --color-text-2: #949cb0;
+
+  /* Fonts: self-hosted via next/font in app/layout.tsx, wired through CSS variables */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-serif: var(--font-instrument-serif), Georgia, "Times New Roman", serif;
+
+  /* Fluid type scale, mobile-first, section 3 of the spec. Each size carries its own leading,
+     tracking and weight as companion tokens, so a single class (e.g. text-hero) applies the
+     whole considered pairing rather than one fixed letter-spacing for every size. */
+  --text-hero: clamp(3rem, 11vw, 8rem);
+  --text-hero--line-height: 0.92;
+  --text-hero--letter-spacing: -0.04em;
+  --text-hero--font-weight: 500;
+
+  --text-h2: clamp(2rem, 5vw, 3.75rem);
+  --text-h2--line-height: 1;
+  --text-h2--letter-spacing: -0.03em;
+  --text-h2--font-weight: 500;
+
+  --text-h3: clamp(1.35rem, 2.6vw, 2rem);
+  --text-h3--line-height: 1.15;
+  --text-h3--letter-spacing: -0.02em;
+  --text-h3--font-weight: 500;
+
+  --text-body: clamp(1.0625rem, 0.5vw + 1rem, 1.1875rem);
+  --text-body--line-height: 1.6;
+  --text-body--letter-spacing: 0em;
+  --text-body--font-weight: 400;
+
+  --text-label: 0.75rem;
+  --text-label--line-height: 1;
+  --text-label--letter-spacing: 0.18em;
+  --text-label--font-weight: 500;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    background: var(--color-void);
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--color-void);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-void);
+  }
+
+  /* Visible focus rings, never removed. :focus-visible so a mouse click doesn't ring every
+     element, but every keyboard, switch-control or screen-reader focus move always gets one. */
+  :focus {
+    outline: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent-hi);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  a,
+  button,
+  [role="button"],
+  summary {
+    cursor: pointer;
+  }
+}
+
+@layer utilities {
+  /* The chrome gradient, section 2 of the spec. Used on rules, wordmark fill, card edges. */
+  .chrome-fill {
+    background-image: linear-gradient(
+      145deg,
+      var(--color-chrome-lo) 0%,
+      var(--color-chrome-mid) 22%,
+      var(--color-chrome-hi) 38%,
+      var(--color-chrome-mid) 52%,
+      var(--color-chrome-lo) 68%,
+      var(--color-chrome-mid) 84%,
+      var(--color-chrome-hi) 100%
+    );
+  }
+
+  /* Deliberately a lighter ramp than .chrome-fill. The same gradient that reads as polished metal
+     on a 1px rule disappears when it fills letterforms: --color-chrome-lo against --color-void is
+     about 1.4:1, so the tail of a word drops below the ground and the studio name stops being
+     readable. These stops keep the metallic roll but bottom out at #8E9AAF, roughly 7:1 on the
+     void, so every glyph clears AA no matter where the ramp lands on it. */
+  .chrome-text {
+    background-image: linear-gradient(
+      145deg,
+      #8e9aaf 0%,
+      #c9d3e2 18%,
+      #ffffff 34%,
+      #c9d3e2 50%,
+      #93a0b6 64%,
+      #d5deea 82%,
+      #ffffff 100%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  .font-serif-italic {
+    font-family: var(--font-serif);
+    font-style: italic;
+  }
+}
+
+/* prefers-reduced-motion is handled per-component (springs jump instantly, see
+   lib/motion/use-spring.ts `immediate` and lib/motion/use-reduced-motion.ts), but this is the
+   safety net: any stray CSS transition or animation collapses to effectively nothing too. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
