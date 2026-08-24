@@ -39,22 +39,25 @@ writes PNGs, and prints an overflow report. **Open the PNGs and look at them.**
 
 ## Open list, in priority order
 
-1. ~~The mark reads as a grey disc, not a solar eclipse.~~ **Done.** It is now drawn, not rendered:
-   `components/ui/eclipse-mark.tsx` is an SVG solar eclipse (solid disc, corona with filaments,
-   diamond-ring flare, limb highlight) that recolours from tokens and holds up at 32px.
-   **Still to do: swap it into the hero in place of the `mark-eclipse.png` image**, and make sure the
-   whole mark sits on screen (half of the raster one was hanging off the right edge).
-   A throwaway route `app/eclipse-preview/page.tsx` renders it at four sizes; **delete that route**
-   once the mark is wired into the hero.
-2. **Boxes everywhere.** Repeatedly disliked. The black version's restraint was better: hairline
-   dividers and open space, cards only where a card earns its place. FAQ is already de-boxed; craft
-   and process are not.
-3. **Craft cards need real entrance choreography**, one by one or in from the sides, not a plain fade.
-4. **The DKK card in the work section does not reveal properly.** Investigate the pinned scrub.
-5. **The hero needs a background.** `public/brand/hero-backdrop.png` exists and is unused.
-6. **Liquid glass must come from the `liquid-glass` skill only** (installed at
-   `~/.claude/skills/liquid-glass`, source `https://github.com/deepika-builds/liquid-glass`).
-   The hand-rolled `.glass-pane` CSS is being replaced by it. Do not re-derive a glass effect.
+1. ~~Mark reads as a grey disc, not an eclipse; half of it off screen.~~ **Done.**
+   `components/ui/eclipse-mark.tsx` draws it as SVG (disc, corona filaments, diamond-ring flare,
+   limb highlight), recolours from tokens, holds up at 32px, and is wired into the hero fully on
+   screen at every width. The raster `mark-eclipse.png` is no longer used by the hero.
+   **Delete `app/eclipse-preview/page.tsx`**, a throwaway route that renders the mark at four sizes.
+2. ~~Liquid glass must come from the skill only.~~ **Done.** The module is vendored at
+   `public/liquid-glass.js` and injected on demand by `components/ui/glass.tsx` (it is a browser
+   IIFE, not an ES module, so it cannot be imported). `.glass-pane` in `globals.css` is now only the
+   material dressing its README asks for, inverted for a light ground.
+3. ~~Boxy craft and process.~~ **Done**, both are card-free.
+4. ~~Reveal text unreadable.~~ **Done**, see the trap note below.
+5. **The DKK card in the work section may still not reveal properly.** Reported by the user, not yet
+   confirmed fixed. It is the fourth and last project in the pinned horizontal scrub. Check whether
+   the last card ever reaches full scale and opacity before the pin releases.
+6. **The six craft items need obvious entrance choreography** (one by one, or in from the sides).
+   Not yet confirmed done. A plain fade is not enough.
+7. **The hero still has no background image.** `public/brand/hero-backdrop.png` exists and is unused.
+   It was made for the dark theme, so it needs heavy feathering and low opacity on white, or leaving
+   out honestly if it cannot be made to work.
 
 ## Traps already paid for, do not rediscover
 - **Hardcoded colours rot across a theme change.** The scroll reveal kept `#eef2ff` from the cobalt
