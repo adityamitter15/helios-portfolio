@@ -79,7 +79,9 @@ export default function RootLayout({
       lang="en-GB"
       className={`${GeistSans.variable} ${GeistMono.variable} ${instrumentSerif.variable} h-full`}
     >
-      <body className="flex min-h-full flex-col bg-void font-sans text-text antialiased">
+      {/* No bg-* on body: html already paints the ground, and an opaque body background sits on top
+          of the fixed aurora layer and hides it completely. */}
+      <body className="flex min-h-full flex-col font-sans text-text antialiased">
         {children}
       </body>
     </html>

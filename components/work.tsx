@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowUpRightIcon } from "@/components/ui/icons";
+import { Glass } from "@/components/ui/glass";
 import { Reveal } from "@/components/ui/reveal";
 import { useReducedMotion } from "@/lib/motion/use-reduced-motion";
 
@@ -89,6 +90,31 @@ export function Work() {
     mm.add(DESKTOP_QUERY, () => {
       const getScrollDistance = () => Math.max(0, trackEl.scrollWidth - pinEl.clientWidth);
 
+      // Depth: each card scales up and sits flush as it nears the centre of the pinned viewport,
+      // then shrinks, dims and drops slightly as it is carried away in either direction, docs/
+      // DESIGN-SPEC-V2.md section 6.2. Read as its own outer wrapper rather than the Glass pane
+      // itself, since components/ui/glass.tsx keeps its DOM node private (no forwarded ref) and
+      // this effect needs a real element to measure and transform.
+      const cardEls = Array.from(trackEl.querySelectorAll<HTMLElement>("[data-work-card]"));
+
+      const updateDepth = () => {
+        const pinRect = pinEl.getBoundingClientRect();
+        const centerX = pinRect.left + pinRect.width / 2;
+        for (const card of cardEls) {
+          const rect = card.getBoundingClientRect();
+          const cardCenter = rect.left + rect.width / 2;
+          const norm = Math.min(1, Math.abs(cardCenter - centerX) / (pinRect.width * 0.55));
+          gsap.set(card, {
+            scale: 1 - norm * 0.14,
+            y: norm * 22,
+            opacity: 1 - norm * 0.3,
+            transformOrigin: "center center",
+          });
+        }
+      };
+
+      updateDepth();
+
       const tween = gsap.to(trackEl, {
         x: () => -getScrollDistance(),
         ease: "none",
@@ -99,15 +125,18 @@ export function Work() {
           scrub: true,
           pin: true,
           invalidateOnRefresh: true,
+          onUpdate: updateDepth,
+          onRefresh: updateDepth,
         },
       });
 
       // gsap.matchMedia reverts everything created in this callback automatically once the
-      // query stops matching or the context is reverted, but the tween and its ScrollTrigger
-      // still need killing explicitly on that revert.
+      // query stops matching or the context is reverted, but the tween, its ScrollTrigger and
+      // the per-card transforms driven imperatively from onUpdate still need clearing explicitly.
       return () => {
         tween.scrollTrigger?.kill();
         tween.kill();
+        gsap.set(cardEls, { clearProps: "all" });
       };
     });
 
@@ -119,7 +148,7 @@ export function Work() {
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
         <Reveal className="flex flex-col gap-4">
           <h2 className="font-mono text-label uppercase text-text-2">Work</h2>
-          <p className="max-w-xl text-body text-text-2">
+          <p className="max-w-xl text-lead text-text-2">
             Four businesses, four live sites, real screenshots from the real thing. Every one
             is a link you can open right now.
           </p>
@@ -132,53 +161,59 @@ export function Work() {
           className="mx-auto flex max-w-6xl flex-col gap-10 px-0 sm:px-0 lg:h-full lg:flex-row lg:items-center lg:gap-8 lg:pl-6 lg:pr-24 lg:will-change-transform"
         >
           {PROJECTS.map((project) => (
-            <article
+            <div
               key={project.slug}
-              className="flex w-full shrink-0 flex-col gap-6 rounded-3xl border border-line bg-surface p-5 sm:p-6 lg:w-[min(78vw,760px)] lg:flex-row lg:items-center lg:gap-8"
+              data-work-card
+              className="flex w-full shrink-0 lg:w-[min(78vw,760px)] lg:will-change-transform"
             >
-              <picture className="block w-full overflow-hidden rounded-2xl border border-line bg-void lg:w-[280px] lg:shrink-0">
-                <source media="(min-width: 700px)" srcSet={`/work/d-${project.slug}.jpg`} />
-                <img
-                  src={`/work/m-${project.slug}.jpg`}
-                  alt={`${project.name} homepage screenshot`}
-                  width={585}
-                  height={1266}
-                  loading="lazy"
-                  decoding="async"
-                  className="aspect-[585/1266] h-auto w-full object-cover lg:aspect-[1440/900]"
-                />
-              </picture>
+              <Glass
+                as="article"
+                className="flex w-full flex-col gap-6 p-5 sm:p-6 lg:flex-row lg:items-center lg:gap-8"
+              >
+                <picture className="block w-full overflow-hidden rounded-2xl border border-line bg-void lg:w-[280px] lg:shrink-0">
+                  <source media="(min-width: 700px)" srcSet={`/work/d-${project.slug}.jpg`} />
+                  <img
+                    src={`/work/m-${project.slug}.jpg`}
+                    alt={`${project.name} homepage screenshot`}
+                    width={585}
+                    height={1266}
+                    loading="lazy"
+                    decoding="async"
+                    className="aspect-[585/1266] h-auto w-full object-cover lg:aspect-[1440/900]"
+                  />
+                </picture>
 
-              <div className="flex flex-1 flex-col gap-4">
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-h3 text-text">{project.name}</h3>
-                  <p className="font-mono text-sm text-text-2">{project.domain}</p>
+                <div className="flex flex-1 flex-col gap-4">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-h3 text-text">{project.name}</h3>
+                    <p className="font-mono text-sm text-text-2">{project.domain}</p>
+                  </div>
+
+                  <p className="text-body text-text-2">{project.description}</p>
+
+                  <ul className="flex flex-wrap gap-2">
+                    {project.tags.map((tag) => (
+                      <li
+                        key={tag}
+                        className="rounded-full border border-line px-3 py-1 font-mono text-xs uppercase tracking-wide text-text-2"
+                      >
+                        {tag}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <a
+                    href={project.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group mt-2 inline-flex min-h-11 w-fit items-center gap-2 rounded-full border border-line px-5 text-body font-medium text-text transition-colors hover:border-accent hover:text-accent active:border-accent active:text-accent"
+                  >
+                    Visit the live site
+                    <ArrowUpRightIcon className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-active:translate-x-0.5 group-active:-translate-y-0.5" />
+                  </a>
                 </div>
-
-                <p className="text-body text-text-2">{project.description}</p>
-
-                <ul className="flex flex-wrap gap-2">
-                  {project.tags.map((tag) => (
-                    <li
-                      key={tag}
-                      className="rounded-full border border-line px-3 py-1 font-mono text-xs uppercase tracking-wide text-text-2"
-                    >
-                      {tag}
-                    </li>
-                  ))}
-                </ul>
-
-                <a
-                  href={project.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group mt-2 inline-flex min-h-11 w-fit items-center gap-2 rounded-full border border-line px-5 text-body font-medium text-text transition-colors hover:border-accent hover:text-accent"
-                >
-                  Visit the live site
-                  <ArrowUpRightIcon className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </a>
-              </div>
-            </article>
+              </Glass>
+            </div>
           ))}
         </div>
       </div>

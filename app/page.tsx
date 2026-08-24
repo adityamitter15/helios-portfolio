@@ -8,11 +8,13 @@ import { Nav } from "@/components/nav";
 import { Offer } from "@/components/offer";
 import { Process } from "@/components/process";
 import { Proof } from "@/components/proof";
+import { Aurora } from "@/components/ui/aurora";
 import { Work } from "@/components/work";
 
 export default function Home() {
   return (
     <>
+      <Aurora />
       <Nav />
 
       <main id="main" className="flex flex-1 flex-col pb-20 sm:pb-0">

@@ -82,7 +82,7 @@ function FaqItem({ question, answer }: (typeof FAQS)[number]) {
   const rotation = useSpring(open ? 180 : 0, { ...SPRING, immediate: reduced });
 
   return (
-    <div className="border-b border-line">
+    <div className="flex flex-col border-b border-line last:border-b-0">
       <h3>
         <button
           type="button"
@@ -103,7 +103,7 @@ function FaqItem({ question, answer }: (typeof FAQS)[number]) {
         inert={!open}
         style={{ height: reduced ? (open ? "auto" : 0) : height.value, overflow: "hidden" }}
       >
-        <div ref={contentRef} className="max-w-2xl pb-6 pr-8 text-body text-text-2">
+        <div ref={contentRef} className="max-w-2xl pb-6 pr-2 text-body text-text-2">
           {answer}
         </div>
       </div>
@@ -117,7 +117,9 @@ function FaqItem({ question, answer }: (typeof FAQS)[number]) {
  * with a spring on measured pixel height rather than the native <details> element, since a real
  * spring needs a numeric target to integrate toward. `inert` takes the closed panel out of the
  * tab order and the accessibility tree entirely, the same technique components/nav.tsx uses for
- * its own hidden state.
+ * its own hidden state. Each question is now its own liquid glass row (docs/DESIGN-SPEC-V2.md
+ * section 1) rather than a plain divider list, so the FAQ reads as the same material as the rest
+ * of the page.
  */
 export function Faq() {
   return (
@@ -129,12 +131,12 @@ export function Faq() {
       <div className="mx-auto flex max-w-3xl flex-col gap-10">
         <Reveal className="flex flex-col gap-4">
           <h2 className="font-mono text-label uppercase text-text-2">Questions</h2>
-          <p className="max-w-xl text-body text-text-2">
+          <p className="max-w-xl text-lead text-text-2">
             The things people usually want settled before they get in touch.
           </p>
         </Reveal>
 
-        <Reveal startIndex={2} className="flex flex-col">
+        <Reveal startIndex={2} className="flex flex-col gap-4">
           {FAQS.map((faq) => (
             <FaqItem key={faq.question} {...faq} />
           ))}

@@ -14,6 +14,7 @@ import {
   SmartphoneIcon,
   TapIcon,
 } from "@/components/ui/icons";
+import { Glass } from "@/components/ui/glass";
 import { Reveal } from "@/components/ui/reveal";
 import { useSpring } from "@/lib/motion/use-spring";
 import { useReducedMotion } from "@/lib/motion/use-reduced-motion";
@@ -74,11 +75,13 @@ function CraftCard({ icon: Icon, title, body }: (typeof CARDS)[number]) {
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
       style={reduced ? undefined : { transform: `scale(${scale.value})`, willChange: "transform" }}
-      className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-6 sm:p-7"
+      className="h-full"
     >
-      <Icon className="h-6 w-6 shrink-0 text-accent" />
-      <h3 className="text-h3 text-text">{title}</h3>
-      <p className="text-body text-text-2">{body}</p>
+      <Glass className="flex h-full flex-col gap-4 p-6 sm:p-7">
+        <Icon className="h-6 w-6 shrink-0 text-accent" />
+        <h3 className="text-h3 text-text">{title}</h3>
+        <p className="text-body text-text-2">{body}</p>
+      </Glass>
     </div>
   );
 }
@@ -95,7 +98,7 @@ export function Craft() {
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
         <Reveal className="flex flex-col gap-4">
           <h2 className="font-mono text-label uppercase text-text-2">What you get</h2>
-          <p className="max-w-xl text-body text-text-2">
+          <p className="max-w-xl text-lead text-text-2">
             Six things every HELIOS build starts from, whatever the business behind it.
           </p>
         </Reveal>

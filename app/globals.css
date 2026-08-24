@@ -7,19 +7,32 @@
   Do not invent new colours here. Do not use pure black.
 */
 @theme {
-  /* Colour tokens, contrast pairs already verified against --void, see the spec, do not re-derive */
-  --color-void: #08090c;
-  --color-surface: #0f1116;
-  --color-surface-2: #161922;
-  --color-line: #232734;
-  --color-chrome-hi: #e8eef7;
-  --color-chrome-mid: #9aa7bd;
-  --color-chrome-lo: #3a4152;
-  --color-accent: #5b8cff;
-  --color-accent-hi: #a8c0ff;
-  --color-glow: #c8d4ff;
-  --color-text: #f2f4f8;
-  --color-text-2: #949cb0;
+  /* Daylight palette, white with pale blue light. Contrast computed against #FFFFFF, use as given.
+     Token NAMES are deliberately unchanged across every palette this project has worn, so a theme
+     swap stays a single-file change instead of touching every component. --color-void is simply
+     "the page ground", which is now white rather than cobalt or near-black. */
+  --color-void: #ffffff;        /* page ground */
+  --color-surface: #f6f9ff;     /* card */
+  --color-surface-2: #eef4ff;   /* raised panel */
+  --color-line: #dce6f7;        /* hairline border */
+
+  /* Pale blue light washes. On white these are a soft glow that gives the page depth, not a tint:
+     keep them faint, they are meant to be felt rather than seen as shapes. */
+  --color-bloom-a: #bfd8ff;
+  --color-bloom-b: #cfebff;
+  --color-bloom-c: #dcd9ff;
+
+  /* Metal stops, inverted for a light ground. On white a bright chrome ramp is invisible, so the
+     metal has to run dark. */
+  --color-chrome-hi: #16264a;
+  --color-chrome-mid: #34456f;
+  --color-chrome-lo: #5a6e9c;
+
+  --color-accent: #1257d6;      /* links and accent text, 6.25:1 on white */
+  --color-accent-hi: #0e47b0;   /* BUTTON BACKGROUND, 8.25:1 with --color-void (white) text */
+  --color-glow: #e3eeff;
+  --color-text: #0a1a33;        /* 17.4:1 */
+  --color-text-2: #4a5a78;      /* 6.94:1 */
 
   /* Fonts: self-hosted via next/font in app/layout.tsx, wired through CSS variables */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -29,27 +42,32 @@
   /* Fluid type scale, mobile-first, section 3 of the spec. Each size carries its own leading,
      tracking and weight as companion tokens, so a single class (e.g. text-hero) applies the
      whole considered pairing rather than one fixed letter-spacing for every size. */
-  --text-hero: clamp(3rem, 11vw, 8rem);
-  --text-hero--line-height: 0.92;
-  --text-hero--letter-spacing: -0.04em;
-  --text-hero--font-weight: 500;
+  --text-hero: clamp(3.5rem, 13vw, 10rem);
+  --text-hero--line-height: 0.88;
+  --text-hero--letter-spacing: -0.045em;
+  --text-hero--font-weight: 600;
 
-  --text-h2: clamp(2rem, 5vw, 3.75rem);
-  --text-h2--line-height: 1;
-  --text-h2--letter-spacing: -0.03em;
-  --text-h2--font-weight: 500;
+  --text-h2: clamp(2.4rem, 6.5vw, 5rem);
+  --text-h2--line-height: 0.98;
+  --text-h2--letter-spacing: -0.035em;
+  --text-h2--font-weight: 600;
 
-  --text-h3: clamp(1.35rem, 2.6vw, 2rem);
+  --text-h3: clamp(1.5rem, 3vw, 2.25rem);
   --text-h3--line-height: 1.15;
   --text-h3--letter-spacing: -0.02em;
   --text-h3--font-weight: 500;
 
-  --text-body: clamp(1.0625rem, 0.5vw + 1rem, 1.1875rem);
+  --text-lead: clamp(1.35rem, 2.2vw, 1.875rem);
+  --text-lead--line-height: 1.45;
+  --text-lead--letter-spacing: -0.01em;
+  --text-lead--font-weight: 400;
+
+  --text-body: clamp(1.125rem, 0.6vw + 1.05rem, 1.375rem);
   --text-body--line-height: 1.6;
   --text-body--letter-spacing: 0em;
   --text-body--font-weight: 400;
 
-  --text-label: 0.75rem;
+  --text-label: 0.8125rem;
   --text-label--line-height: 1;
   --text-label--letter-spacing: 0.18em;
   --text-label--font-weight: 500;
@@ -62,12 +80,15 @@
 
   html {
     background: var(--color-void);
-    color-scheme: dark;
+    color-scheme: light;
     -webkit-text-size-adjust: 100%;
   }
 
+  /* Deliberately no background on body. The root element's background is propagated to the canvas,
+     so html alone is enough to paint the page. Setting it on body as well puts an opaque layer in
+     the normal flow that hides the fixed, negatively stacked aurora behind it entirely, which is
+     why the wash was invisible until now. */
   body {
-    background: var(--color-void);
     color: var(--color-text);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -115,24 +136,72 @@
   }
 
   /* Deliberately a lighter ramp than .chrome-fill. The same gradient that reads as polished metal
-     on a 1px rule disappears when it fills letterforms: --color-chrome-lo against --color-void is
-     about 1.4:1, so the tail of a word drops below the ground and the studio name stops being
-     readable. These stops keep the metallic roll but bottom out at #8E9AAF, roughly 7:1 on the
-     void, so every glyph clears AA no matter where the ramp lands on it. */
+     on a 1px rule disappears when it fills letterforms: --color-chrome-lo is far too dark against
+     the ground, so the tail of a word drops below it and the studio name stops being readable.
+     These stops bottom out at #A8B8E8, about 9:1 on the ground, so every glyph clears AA wherever
+     the ramp lands on it. Cool blue-white rather than neutral grey: chrome takes the colour of what
+     it reflects, and on a cobalt page neutral grey reads as dirty. */
   .chrome-text {
     background-image: linear-gradient(
       145deg,
-      #8e9aaf 0%,
-      #c9d3e2 18%,
-      #ffffff 34%,
-      #c9d3e2 50%,
-      #93a0b6 64%,
-      #d5deea 82%,
-      #ffffff 100%
+      #16264a 0%,
+      #3d5185 18%,
+      #5a6e9c 34%,
+      #2b3c66 50%,
+      #16264a 64%,
+      #46598c 82%,
+      #22335c 100%
     );
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
+  }
+
+  /* Glass on a light ground. This is the inverse problem to glass on a dark one: a white
+     translucent fill over white is invisible, and a bright "lit edge" along the top has nothing to
+     contrast against. So on daylight the pane reads through a near-opaque white fill, a hairline
+     that is *darker* than the pane, and a soft blue-cast shadow that lifts it off the page.
+     The blur still matters, it is what lets the pale blue wash bleed through and tint the pane. */
+  .glass-pane {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.9) inset,
+      0 1px 2px 0 rgba(16, 38, 84, 0.04),
+      0 18px 40px -24px rgba(16, 38, 84, 0.22);
+  }
+
+  /* The edge. On light it is a hairline that darkens toward the bottom, the opposite of the dark
+     theme's top-lit edge: on a white page the shadowed underside is what reads as depth. */
+  .glass-pane::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.95),
+      rgba(150, 175, 220, 0.28) 46%,
+      rgba(96, 128, 186, 0.34) 100%
+    );
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+  }
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-pane {
+      background: var(--color-surface);
+    }
   }
 
   .font-serif-italic {
