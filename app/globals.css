@@ -135,12 +135,12 @@
     );
   }
 
-  /* Deliberately a lighter ramp than .chrome-fill. The same gradient that reads as polished metal
-     on a 1px rule disappears when it fills letterforms: --color-chrome-lo is far too dark against
-     the ground, so the tail of a word drops below it and the studio name stops being readable.
-     These stops bottom out at #A8B8E8, about 9:1 on the ground, so every glyph clears AA wherever
-     the ramp lands on it. Cool blue-white rather than neutral grey: chrome takes the colour of what
-     it reflects, and on a cobalt page neutral grey reads as dirty. */
+  /* A separate ramp from .chrome-fill, because a metallic gradient that works on a 1px rule does
+     not survive being poured into letterforms. On the daylight ground the metal has to run DARK:
+     a bright chrome ramp simply vanishes on white. These stops span #16264A to #5A6E9C, so the
+     lightest point a glyph can land on is still about 5:1 and the studio name stays readable
+     wherever the ramp falls across it. Blue-cast rather than neutral grey, since chrome takes the
+     colour of what it reflects and neutral grey reads as dirty next to the blue wash. */
   .chrome-text {
     background-image: linear-gradient(
       145deg,
@@ -157,50 +157,28 @@
     color: transparent;
   }
 
-  /* Glass on a light ground. This is the inverse problem to glass on a dark one: a white
-     translucent fill over white is invisible, and a bright "lit edge" along the top has nothing to
-     contrast against. So on daylight the pane reads through a near-opaque white fill, a hairline
-     that is *darker* than the pane, and a soft blue-cast shadow that lifts it off the page.
-     The blur still matters, it is what lets the pale blue wash bleed through and tint the pane. */
+  /* Material dressing for the liquid-glass module (components/ui/glass.tsx). The module owns the
+     optics; this is the tint, border and shadow its README asks for, which is what makes a
+     refracting rectangle read as a physical pane.
+
+     The README's recipe tints dark, for glass over dark imagery. Inverted here: over a white page
+     the tint has to be a light wash, and the depth comes from a blue-cast drop shadow rather than
+     from a bright top highlight, which has nothing to catch against on white. */
   .glass-pane {
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(20px) saturate(140%);
-    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(240, 245, 255, 0.78));
     box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.9) inset,
-      0 1px 2px 0 rgba(16, 38, 84, 0.04),
-      0 18px 40px -24px rgba(16, 38, 84, 0.22);
+      0 18px 44px -26px rgba(16, 38, 84, 0.3),
+      inset 0 1px 1px rgba(255, 255, 255, 0.9),
+      inset 0 -8px 20px rgba(255, 255, 255, 0.35),
+      inset 0 0 0 1px rgba(120, 150, 210, 0.22);
   }
 
-  /* The edge. On light it is a hairline that darkens toward the bottom, the opposite of the dark
-     theme's top-lit edge: on a white page the shadowed underside is what reads as depth. */
-  .glass-pane::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.95),
-      rgba(150, 175, 220, 0.28) 46%,
-      rgba(96, 128, 186, 0.34) 100%
-    );
-    mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    mask-composite: exclude;
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    pointer-events: none;
-  }
-
-  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* Where the module cannot refract (Safari, Firefox, reduced motion, or a panel too large for it
+     to be worth the GPU cost) the pane must still be a legible surface, not a transparent box. */
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
     .glass-pane {
-      background: var(--color-surface);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
     }
   }
 

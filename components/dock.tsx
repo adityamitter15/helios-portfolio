@@ -16,7 +16,7 @@ export function Dock() {
       className="fixed inset-x-0 bottom-0 z-40 px-3 pt-3 sm:hidden"
       style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
     >
-      <Glass specular={false} radius="1.25rem" className="flex gap-2 p-2">
+      <Glass radius="1.25rem" className="flex gap-2 p-2">
         <a
           href={CALL_HREF}
           aria-label={`Call Aditya, ${PHONE_DISPLAY}`}

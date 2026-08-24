@@ -23,7 +23,7 @@ export function Footer() {
   return (
     <footer>
       <ChromeRule />
-      <Glass as="div" specular={false} radius="0" className="px-0">
+      <Glass as="div" radius="0" className="px-0">
         {/* Extra bottom padding on mobile only: the sticky dock (components/dock.tsx) is fixed
             over this last stretch of the page below sm, and the colophon line must clear it
             rather than sit half hidden underneath. */}

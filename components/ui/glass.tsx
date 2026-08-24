@@ -1,43 +1,65 @@
 "use client";
 
-import {
-  useCallback,
-  useRef,
-  useState,
-  type CSSProperties,
-  type ElementType,
-  type PointerEvent as ReactPointerEvent,
-  type ReactNode,
-} from "react";
+import { useEffect, useRef, type CSSProperties, type ElementType, type ReactNode } from "react";
 
 /**
- * Liquid glass, docs/DESIGN-SPEC-V2.md section 3. The single implementation of the material:
- * sections compose this rather than hand-rolling their own translucent boxes, otherwise the panes
- * drift apart and stop reading as the same substance.
+ * Liquid glass, from the `liquid-glass` module vendored at public/liquid-glass.js
+ * (https://github.com/deepika-builds/liquid-glass). The optics are the module's job: the SVG
+ * displacement filter, the chromatic fringe, the backdrop filter, resize handling, and the frosted
+ * fallback on Safari and Firefox. This component only mounts it and supplies the CSS dressing the
+ * module's README asks for, which is what makes a refracting rectangle actually read as glass.
  *
- * Four things together make it look like glass rather than a tinted div, and dropping any one of
- * them is what makes this effect look cheap:
+ * The module is a browser IIFE that assigns window.liquidGlass rather than an ES module, so it is
+ * served from public/ and injected once on demand rather than imported. Importing it would fail
+ * typechecking (it exports nothing) and a top level import would evaluate it during the server
+ * render, where `window` does not exist.
  *
- *   1. backdrop blur AND saturation. Blur alone greys out whatever is behind; the saturation boost
- *      is what keeps the aurora's colour alive through the pane.
- *   2. a tinted fill rather than full transparency, so the pane has substance of its own.
- *   3. a lit edge: a border that is brighter along the top and fades toward the bottom, the way a
- *      real pane catches light from above. A single flat border is the giveaway of fake glass.
- *   4. a specular highlight that tracks the pointer. This is the "liquid" part, and the only part
- *      that makes the surface feel responsive rather than painted on.
- *
- * The lit edge is done with a gradient-filled border via mask compositing rather than border-color,
- * because a border cannot itself hold a gradient.
+ * Tuning notes, following the module's own guidance rather than invented values: the page ground is
+ * white and largely calm, so `blur` stays low (a busy backdrop is what forces it up) and `scale`
+ * sits at the subtle end, because a strong bulge over text is what makes interiors smear. The
+ * refraction never carries meaning: Safari and Firefox get the frosted fallback automatically and
+ * lose nothing but the bend at the rim.
  */
+
+interface LiquidGlassHandle {
+  supported: boolean;
+  refresh: () => void;
+  destroy: () => void;
+}
+
+type LiquidGlassFn = (
+  el: HTMLElement,
+  options?: Record<string, number | string | null>,
+) => LiquidGlassHandle;
+
+declare global {
+  interface Window {
+    liquidGlass?: LiquidGlassFn;
+  }
+}
+
+/** Injects the vendored script once per page and resolves when window.liquidGlass exists. */
+let modulePromise: Promise<void> | null = null;
+function loadModule(): Promise<void> {
+  if (window.liquidGlass) return Promise.resolve();
+  if (modulePromise) return modulePromise;
+  modulePromise = new Promise<void>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "/liquid-glass.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("liquid-glass failed to load"));
+    document.head.appendChild(script);
+  });
+  return modulePromise;
+}
 
 interface GlassProps {
   children: ReactNode;
   as?: ElementType;
   className?: string;
-  /** Corner radius token. Matches the rounded-* scale used across the sections. */
+  /** Corner radius. The module reads this to build its displacement map, so keep them in step. */
   radius?: string;
-  /** Turn off the pointer-tracked sheen for large background panes where it would be wasted. */
-  specular?: boolean;
   style?: CSSProperties;
 }
 
@@ -46,58 +68,53 @@ export function Glass({
   as: Tag = "div",
   className = "",
   radius = "1.5rem",
-  specular = true,
   style,
 }: GlassProps) {
   const ref = useRef<HTMLElement>(null);
-  const [sheen, setSheen] = useState<{ x: number; y: number; on: boolean }>({
-    x: 50,
-    y: 50,
-    on: false,
-  });
 
-  const handleMove = useCallback(
-    (event: ReactPointerEvent<HTMLElement>) => {
-      if (!specular) return;
-      // Coarse pointers (touch) get no sheen: there is no hover state to track, and firing this on
-      // every touchmove would just cost work for an effect nobody sees.
-      if (event.pointerType === "touch") return;
-      const el = ref.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      setSheen({
-        x: ((event.clientX - rect.left) / rect.width) * 100,
-        y: ((event.clientY - rect.top) / rect.height) * 100,
-        on: true,
-      });
-    },
-    [specular],
-  );
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
 
-  const handleLeave = useCallback(() => {
-    setSheen((s) => (s.on ? { ...s, on: false } : s));
+    let handle: LiquidGlassHandle | undefined;
+    let cancelled = false;
+
+    // Refraction is decoration, so it is skipped entirely when the viewer has asked for less
+    // motion or where the panel is large enough that the module warns about GPU cost.
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const rect = el.getBoundingClientRect();
+    const tooLarge = rect.width > 800 || rect.height > 800;
+
+    if (!reduced && !tooLarge) {
+      loadModule()
+        .then(() => {
+          if (cancelled || !window.liquidGlass) return;
+          handle = window.liquidGlass(el, {
+            scale: -70,
+            chroma: 4,
+            blur: 2,
+            saturate: 1.35,
+            fallbackBlur: 14,
+          });
+        })
+        .catch(() => {
+          // The CSS dressing below already reads as a panel on its own, so a failed load simply
+          // means no refraction rather than an unreadable box.
+        });
+    }
+
+    return () => {
+      cancelled = true;
+      handle?.destroy();
+    };
   }, []);
 
   return (
     <Tag
       ref={ref}
-      onPointerMove={handleMove}
-      onPointerLeave={handleLeave}
-      className={`glass-pane relative isolate overflow-hidden ${className}`}
-      style={{ "--glass-radius": radius, borderRadius: radius, ...style } as CSSProperties}
+      className={`glass-pane relative isolate ${className}`}
+      style={{ borderRadius: radius, ...style }}
     >
-      {specular ? (
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 transition-opacity duration-300"
-          style={{
-            opacity: sheen.on ? 1 : 0,
-            // Tinted rather than white: on a light ground a white sheen is invisible, so the
-            // highlight has to read as a faint pool of blue light gathering under the pointer.
-            background: `radial-gradient(38rem circle at ${sheen.x}% ${sheen.y}%, rgba(96, 140, 225, 0.13), transparent 60%)`,
-          }}
-        />
-      ) : null}
       {children}
     </Tag>
   );
