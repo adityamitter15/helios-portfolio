@@ -88,14 +88,32 @@ export function Work() {
     const mm = gsap.matchMedia();
 
     mm.add(DESKTOP_QUERY, () => {
-      const getScrollDistance = () => Math.max(0, trackEl.scrollWidth - pinEl.clientWidth);
-
       // Depth: each card scales up and sits flush as it nears the centre of the pinned viewport,
       // then shrinks, dims and drops slightly as it is carried away in either direction, docs/
       // DESIGN-SPEC-V2.md section 6.2. Read as its own outer wrapper rather than the Glass pane
       // itself, since components/ui/glass.tsx keeps its DOM node private (no forwarded ref) and
       // this effect needs a real element to measure and transform.
       const cardEls = Array.from(trackEl.querySelectorAll<HTMLElement>("[data-work-card]"));
+
+      // The scrub has to travel far enough that the LAST card can reach the centre of the pinned
+      // viewport, the same moment every other card gets on its way past. Using the track's raw
+      // overflow (scrollWidth - clientWidth) stops short of that: the track only travels until
+      // its trailing edge, including the row's own right padding, reaches the viewport's edge,
+      // which left the last card's centre sitting well right of the pin's centre at the end of
+      // the scroll. That card could never reach norm 0 in updateDepth below, so it stayed dimmed
+      // and slightly shrunk instead of fully revealed, the "DKK does not reveal properly" defect.
+      // Measuring the last card's own layout offset, which stays constant regardless of the
+      // transform GSAP drives on trackEl, and solving directly for the scroll distance that
+      // centres it fixes this for any viewport width rather than one particular width.
+      const LAST_CARD_BUFFER_PX = 48; // a little scroll to spare past dead centre, not the exact edge
+      const getScrollDistance = () => {
+        const overflowDistance = Math.max(0, trackEl.scrollWidth - pinEl.clientWidth);
+        const lastCard = cardEls[cardEls.length - 1];
+        if (!lastCard) return overflowDistance;
+        const lastCardCenter = lastCard.offsetLeft + lastCard.offsetWidth / 2;
+        const centerDistance = lastCardCenter - pinEl.clientWidth / 2 + LAST_CARD_BUFFER_PX;
+        return Math.max(overflowDistance, centerDistance);
+      };
 
       const updateDepth = () => {
         const pinRect = pinEl.getBoundingClientRect();
@@ -169,6 +187,18 @@ export function Work() {
               <Glass
                 as="article"
                 className="flex w-full flex-col gap-6 p-5 sm:p-6 lg:flex-row lg:items-center lg:gap-8"
+                style={{
+                  // Lighter than the default glass-pane fill and drop shadow (docs/RESUME.md
+                  // "boxes everywhere"): these are genuinely discrete objects, four separate
+                  // sites, so a surface earns its place here, it just should not read as heavy
+                  // as a generic card. Tokens throughout, not literals, so this stays correct
+                  // across a theme change instead of rotting like the hardcoded hex already
+                  // found once in this codebase.
+                  background: "color-mix(in srgb, var(--color-surface) 80%, transparent)",
+                  boxShadow:
+                    "0 1px 0 0 color-mix(in srgb, var(--color-void) 92%, transparent) inset, " +
+                    "0 10px 24px -20px color-mix(in srgb, var(--color-text) 16%, transparent)",
+                }}
               >
                 <picture className="block w-full overflow-hidden rounded-2xl border border-line bg-void lg:w-[280px] lg:shrink-0">
                   <source media="(min-width: 700px)" srcSet={`/work/d-${project.slug}.jpg`} />

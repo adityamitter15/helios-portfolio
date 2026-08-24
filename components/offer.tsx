@@ -83,7 +83,19 @@ export function Offer() {
       />
 
       <div className="relative z-10 mx-auto max-w-3xl px-6 sm:px-8">
-        <Glass className="flex flex-col items-start gap-8 p-8 sm:p-12">
+        <Glass
+          className="flex flex-col items-start gap-8 p-8 sm:p-12"
+          style={{
+            // Lighter than the default glass-pane fill and drop shadow (docs/RESUME.md "boxes
+            // everywhere"): this panel earns its place as the single CTA surface on the page, it
+            // just should not read as heavy as the six-card grids that prompted the complaint.
+            // Tokens throughout, never literals, so it stays correct across a theme change.
+            background: "color-mix(in srgb, var(--color-surface) 78%, transparent)",
+            boxShadow:
+              "0 1px 0 0 color-mix(in srgb, var(--color-void) 92%, transparent) inset, " +
+              "0 10px 24px -20px color-mix(in srgb, var(--color-text) 16%, transparent)",
+          }}
+        >
           <Reveal className="flex flex-col gap-6">
             <h2 className="font-mono text-label uppercase text-text-2">The offer</h2>
             <p className="text-h2 text-text">See it before you pay.</p>

@@ -39,9 +39,13 @@ writes PNGs, and prints an overflow report. **Open the PNGs and look at them.**
 
 ## Open list, in priority order
 
-1. **The mark reads as a grey disc, not a solar eclipse.** Needs regenerating as a proper eclipse:
-   a black disc with a real corona flaring around it. Also **half of it currently sits off the right
-   edge of the screen** and must be brought fully into view.
+1. ~~The mark reads as a grey disc, not a solar eclipse.~~ **Done.** It is now drawn, not rendered:
+   `components/ui/eclipse-mark.tsx` is an SVG solar eclipse (solid disc, corona with filaments,
+   diamond-ring flare, limb highlight) that recolours from tokens and holds up at 32px.
+   **Still to do: swap it into the hero in place of the `mark-eclipse.png` image**, and make sure the
+   whole mark sits on screen (half of the raster one was hanging off the right edge).
+   A throwaway route `app/eclipse-preview/page.tsx` renders it at four sizes; **delete that route**
+   once the mark is wired into the hero.
 2. **Boxes everywhere.** Repeatedly disliked. The black version's restraint was better: hairline
    dividers and open space, cards only where a card earns its place. FAQ is already de-boxed; craft
    and process are not.
@@ -80,6 +84,12 @@ writes PNGs, and prints an overflow report. **Open the PNGs and look at them.**
 - Body text never below 18px on mobile.
 - Buttons: `bg-accent-hi` with `text-void`. Never white text on the mid blue.
 - `prefers-reduced-motion` must give a still, complete, readable page.
+
+## Known open issue
+A React hydration mismatch is being reported on the page. It appeared while two agents were
+mid-edit on `nav.tsx`, `dock.tsx`, `globals.css` and `hero.tsx`, so it may be theirs rather than
+the mark's. Re-check with the console probe once the tree is stable:
+`node probe.mjs http://localhost:3000` from the scratchpad directory.
 
 ## Still outstanding for launch
 `app/layout.tsx` points canonical and Open Graph at `builtbyhelios.vercel.app`, which is the *other*
