@@ -102,6 +102,24 @@ export function Hero() {
       aria-label="Introduction"
       className="relative flex min-h-svh flex-col justify-center overflow-hidden px-6 pb-10 pt-16 sm:px-8 sm:pb-16 sm:pt-24"
     >
+      {/* Hero backdrop. The render is a dark aurora made for the near-black theme, so on white it is
+          used at low opacity and feathered hard on every edge: enough to give the right side some
+          weather behind the mark, never a rectangle sitting on the page. It is anchored right so it
+          stays clear of the type on the left, where the contrast ratios have to hold. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 right-0 z-0 w-full select-none opacity-[0.16] sm:w-[72%]"
+        style={{
+          backgroundImage: "url(/brand/hero-backdrop.png)",
+          backgroundSize: "cover",
+          backgroundPosition: "center right",
+          maskImage:
+            "radial-gradient(115% 95% at 78% 45%, #000 12%, rgba(0,0,0,0.55) 46%, transparent 76%)",
+          WebkitMaskImage:
+            "radial-gradient(115% 95% at 78% 45%, #000 12%, rgba(0,0,0,0.55) 46%, transparent 76%)",
+        }}
+      />
+
       {/* Text and mark are real flex siblings, not an absolutely positioned mark layered over a
           full-width text block: at the tablet width band a vw-scaled "Aditya Mitter" and a
           percentage-offset mark drifted into each other, which is exactly the "decorative art

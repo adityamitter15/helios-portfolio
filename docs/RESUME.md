@@ -39,25 +39,25 @@ writes PNGs, and prints an overflow report. **Open the PNGs and look at them.**
 
 ## Open list, in priority order
 
-1. ~~Mark reads as a grey disc, not an eclipse; half of it off screen.~~ **Done.**
-   `components/ui/eclipse-mark.tsx` draws it as SVG (disc, corona filaments, diamond-ring flare,
-   limb highlight), recolours from tokens, holds up at 32px, and is wired into the hero fully on
-   screen at every width. The raster `mark-eclipse.png` is no longer used by the hero.
-   **Delete `app/eclipse-preview/page.tsx`**, a throwaway route that renders the mark at four sizes.
-2. ~~Liquid glass must come from the skill only.~~ **Done.** The module is vendored at
-   `public/liquid-glass.js` and injected on demand by `components/ui/glass.tsx` (it is a browser
-   IIFE, not an ES module, so it cannot be imported). `.glass-pane` in `globals.css` is now only the
-   material dressing its README asks for, inverted for a light ground.
-3. ~~Boxy craft and process.~~ **Done**, both are card-free.
-4. ~~Reveal text unreadable.~~ **Done**, see the trap note below.
-5. **The DKK card in the work section may still not reveal properly.** Reported by the user, not yet
-   confirmed fixed. It is the fourth and last project in the pinned horizontal scrub. Check whether
-   the last card ever reaches full scale and opacity before the pin releases.
-6. **The six craft items need obvious entrance choreography** (one by one, or in from the sides).
-   Not yet confirmed done. A plain fade is not enough.
-7. **The hero still has no background image.** `public/brand/hero-backdrop.png` exists and is unused.
-   It was made for the dark theme, so it needs heavy feathering and low opacity on white, or leaving
-   out honestly if it cannot be made to work.
+Everything raised so far is done. What remains is launch work, not defects.
+
+1. **Production domain.** `app/layout.tsx` still points canonical and Open Graph at
+   `builtbyhelios.vercel.app`, which is the *other* site. Must change before launch or forwarded
+   links preview as the wrong site. This is the only blocking item.
+2. **Deploy.** Not deployed anywhere yet.
+3. Optional polish worth a look with fresh eyes: the eclipse disc is fairly heavy on a white page,
+   and the six craft items could carry an icon treatment that is less generic.
+
+### Recently closed
+- Eclipse mark drawn as SVG, fully on screen, reads as a solar eclipse, holds at 32px.
+- Liquid glass now comes from the vendored module only, no hand-rolled effect.
+- Craft and process de-boxed; craft items slide in alternately from left and right with a stagger.
+- DKK card reveal fixed by solving for the scroll distance that centres the last card, rather than
+  using the track's raw overflow, which always stopped short.
+- Scroll reveal colours corrected for the light ground (was invisible at 1.05:1).
+- Hydration mismatch fixed: SVG coordinates are rounded, and the mark's scroll transform is written
+  imperatively so no client-only value reaches server markup. Console is clean.
+- Hero backdrop added, feathered and held right of the type at low opacity.
 
 ## Traps already paid for, do not rediscover
 - **Hardcoded colours rot across a theme change.** The scroll reveal kept `#eef2ff` from the cobalt
