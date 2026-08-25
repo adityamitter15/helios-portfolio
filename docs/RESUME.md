@@ -80,7 +80,7 @@ writes PNGs, and prints an overflow report. **Open the PNGs and look at them.**
   the browser extension. Non-square aspect ratios fail intermittently; just resubmit.
 
 ## Ground rules that are not negotiable
-- **No em dashes anywhere.** `grep -rn $'—' app components lib docs`
+- **No em dashes anywhere.** `grep -rn $'\u2014' app components lib docs`
 - No mention of Claude, AI, agents or "generated" in code, comments or commits.
 - No prices anywhere on the site.
 - Aditya Mitter stays hero-scale. The hero must state the trade outright.

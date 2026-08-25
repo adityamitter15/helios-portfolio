@@ -74,19 +74,26 @@ export function Hero() {
   const leadP = useEntranceProgress(DELAY.lead, reduced);
   const ctaP = useEntranceProgress(DELAY.ctas, reduced);
 
-  // The mark composes two independent transforms into one: its own entrance (a scale-in from
-  // 0.86, arriving with the wordmark) and the existing scroll parallax (drift and grow as the
-  // section scrolls by). Both are inline styles on the *inner* Image only, never its wrapper:
-  // an inline transform silently replaces a Tailwind translate rather than composing with it.
-  // Layout (position and size) stays entirely on the wrapper below.
-  const markStyle: CSSProperties = reduced
-    ? {}
-    : {
-        transform: `translate3d(0, ${scrollProgress * -64}px, 0) scale(${
-          (0.86 + markP * 0.14) * (1 + scrollProgress * 0.14)
-        })`,
-        opacity: markP * (1 - scrollProgress * 0.35),
-      };
+  // The mark's transform is written straight to the DOM in an effect rather than rendered as a
+  // style attribute. Its inputs (scroll position, spring progress) only exist on the client, so
+  // letting React render them produces a style string the server cannot reproduce, which is a
+  // hydration mismatch. Writing it imperatively means the server and the first client render agree
+  // on the markup exactly, and the animation takes over immediately afterwards.
+  const markRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = markRef.current;
+    if (!el) return;
+    if (reduced) {
+      el.style.transform = "";
+      el.style.opacity = "";
+      return;
+    }
+    // Its own entrance (a scale-in arriving with the wordmark) composed with the scroll parallax.
+    const scale = (0.86 + markP * 0.14) * (1 + scrollProgress * 0.14);
+    el.style.transform = `translate3d(0, ${scrollProgress * -64}px, 0) scale(${scale})`;
+    el.style.opacity = String(markP * (1 - scrollProgress * 0.35));
+  }, [markP, scrollProgress, reduced]);
 
   return (
     <section
@@ -114,10 +121,9 @@ export function Hero() {
             lg:w-[34%] lg:max-w-[500px]
             xl:max-w-[560px]"
         >
-          <EclipseMark
-            className="pointer-events-none absolute inset-0 h-full w-full select-none"
-            style={markStyle}
-          />
+          <div ref={markRef} className="absolute inset-0">
+            <EclipseMark className="pointer-events-none h-full w-full select-none" />
+          </div>
         </div>
 
         <div className="flex flex-col gap-10 sm:max-w-sm md:max-w-md lg:max-w-2xl">

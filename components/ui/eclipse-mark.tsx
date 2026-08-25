@@ -24,6 +24,13 @@ interface EclipseMarkProps {
   flareAngle?: number;
 }
 
+/** Rounds a coordinate to a fixed precision so the server and the browser emit the same string.
+ *  Math.cos and Math.sin are implementation-approximated in ECMAScript, so Node and V8 can disagree
+ *  in the last bit: the server rendered x1="59.39964451469416" while Chrome computed
+ *  59.39964451469417, which React reports as a hydration mismatch. Three decimals is far finer than
+ *  a 200 unit viewBox can show, and it is identical on both sides. */
+const fix = (n: number) => Math.round(n * 1000) / 1000;
+
 export function EclipseMark({ className = "", style, flareAngle = -45 }: EclipseMarkProps) {
   const uid = useId().replace(/:/g, "");
   const id = (name: string) => `${name}-${uid}`;
@@ -34,8 +41,8 @@ export function EclipseMark({ className = "", style, flareAngle = -45 }: Eclipse
   const rDisc = 52;
 
   const flareRad = ((flareAngle - 90) * Math.PI) / 180;
-  const flareX = c + Math.cos(flareRad) * rDisc;
-  const flareY = c + Math.sin(flareRad) * rDisc;
+  const flareX = fix(c + Math.cos(flareRad) * rDisc);
+  const flareY = fix(c + Math.sin(flareRad) * rDisc);
 
   return (
     <svg
@@ -107,10 +114,10 @@ export function EclipseMark({ className = "", style, flareAngle = -45 }: Eclipse
             return (
               <line
                 key={i}
-                x1={c + Math.cos(a) * 53}
-                y1={c + Math.sin(a) * 53}
-                x2={c + Math.cos(a) * (53 + len)}
-                y2={c + Math.sin(a) * (53 + len)}
+                x1={fix(c + Math.cos(a) * 53)}
+                y1={fix(c + Math.sin(a) * 53)}
+                x2={fix(c + Math.cos(a) * (53 + len))}
+                y2={fix(c + Math.sin(a) * (53 + len))}
                 stroke="var(--color-accent)"
                 strokeWidth={i % 3 === 0 ? 1.5 : 0.7}
                 strokeLinecap="round"
