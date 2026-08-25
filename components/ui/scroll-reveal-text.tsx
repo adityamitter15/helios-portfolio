@@ -48,7 +48,13 @@ export function ScrollRevealText({ text, accentWords = [], className }: ScrollRe
   // Called unconditionally so hook order never depends on the reduced-motion branch below.
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ["start 0.85", "start 0.32"],
+    // Both ends matter. Keying the finish to the element's START ("start 0.32") only works while
+    // the block is shorter than the viewport: a taller block finishes resolving once its top has
+    // travelled far enough, which happens while its last lines are still below the fold. Those
+    // words are then already dark by the time they scroll into view, so the effect is invisible
+    // for the tail of the sentence. Tracking to the element's END makes the progress span the
+    // block's whole passage, so every word resolves while it is actually on screen.
+    offset: ["start 0.9", "end 0.62"],
   });
 
   if (reduced) {

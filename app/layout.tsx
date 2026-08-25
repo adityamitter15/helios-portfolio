@@ -15,10 +15,11 @@ const instrumentSerif = Instrument_Serif({
   display: "swap",
 });
 
-// TODO: point this at the real production domain before launch. Placeholder follows the studio's
-// known Vercel deployment (see the existing HELIOS project) so canonical/OG URLs are well formed
-// rather than left unresolved.
-const SITE_URL = "https://builtbyhelios.vercel.app";
+// This project's own deployment. It must never point at builtbyhelios.vercel.app, which is the
+// separate client-facing HELIOS site: sharing is done by forwarding links, so a canonical or OG URL
+// belonging to another site makes every preview claim to be that site.
+// Update this if a custom domain is bought.
+const SITE_URL = "https://helios-portfolio.vercel.app";
 const SITE_TITLE = "HELIOS, a web studio run by Aditya Mitter";
 const SITE_DESCRIPTION =
   "Your business, in its best light. HELIOS is the one-person web studio run by Aditya Mitter in London. See your homepage before you pay: a free mockup, no deposit.";

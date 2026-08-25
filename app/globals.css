@@ -18,9 +18,9 @@
 
   /* Pale blue light washes. On white these are a soft glow that gives the page depth, not a tint:
      keep them faint, they are meant to be felt rather than seen as shapes. */
-  --color-bloom-a: #bfd8ff;
-  --color-bloom-b: #cfebff;
-  --color-bloom-c: #dcd9ff;
+  --color-bloom-a: #9cc4ff;
+  --color-bloom-b: #a5e2ff;
+  --color-bloom-c: #c3bdff;
 
   /* Metal stops, inverted for a light ground. On white a bright chrome ramp is invisible, so the
      metal has to run dark. */

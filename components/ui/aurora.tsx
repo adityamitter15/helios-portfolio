@@ -85,7 +85,12 @@ export function Aurora() {
             top: `${b.home[1]}%`,
             marginLeft: `${-b.size * 50}vw`,
             marginTop: `${-b.size * 50}vw`,
-            background: `radial-gradient(circle, color-mix(in oklab, ${b.color} 100%, transparent) 0%, transparent 68%)`,
+            // Plain colour stops on purpose. This was written with
+            // color-mix(in oklab, <colour> 100%, transparent), which is just the colour itself but
+            // makes the whole gradient depend on color-mix support: in any browser without it the
+            // declaration is invalid and the bloom does not paint at all, so the wash silently
+            // disappears instead of degrading.
+            background: `radial-gradient(circle, ${b.color} 0%, ${b.color} 18%, transparent 70%)`,
             opacity: b.opacity,
             filter: "blur(90px)",
             willChange: reduced ? undefined : "transform",
