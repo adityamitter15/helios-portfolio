@@ -34,9 +34,9 @@ interface Bloom {
 }
 
 const BLOOMS: Bloom[] = [
-  { color: "var(--color-bloom-a)", size: 0.78, home: [18, 22], travel: [9, 7], period: [37, 43], opacity: 0.5 },
-  { color: "var(--color-bloom-b)", size: 0.6, home: [82, 30], travel: [7, 10], period: [53, 61], opacity: 0.34 },
-  { color: "var(--color-bloom-c)", size: 0.7, home: [58, 78], travel: [11, 8], period: [67, 71], opacity: 0.36 },
+  { color: "var(--color-bloom-a)", size: 0.9, home: [18, 22], travel: [9, 7], period: [37, 43], opacity: 0.72 },
+  { color: "var(--color-bloom-b)", size: 0.72, home: [82, 30], travel: [7, 10], period: [53, 61], opacity: 0.5 },
+  { color: "var(--color-bloom-c)", size: 0.82, home: [58, 78], travel: [11, 8], period: [67, 71], opacity: 0.55 },
 ];
 
 export function Aurora() {

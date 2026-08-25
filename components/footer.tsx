@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { ChromeRule } from "@/components/ui/chrome-rule";
+import { EclipseMark } from "@/components/ui/eclipse-mark";
 import { Glass } from "@/components/ui/glass";
 import { MailIcon, PhoneIcon, WhatsAppIcon } from "@/components/ui/icons";
 import { CALL_HREF, EMAIL, EMAIL_HREF, PHONE_DISPLAY, WHATSAPP_HREF } from "@/lib/contact";
@@ -7,9 +7,6 @@ import { CALL_HREF, EMAIL, EMAIL_HREF, PHONE_DISPLAY, WHATSAPP_HREF } from "@/li
 const COVERAGE = ["London", "Reading", "and remotely, anywhere in the UK"];
 
 // Same load-bearing mask as components/hero.tsx and components/nav.tsx, tuned for
-// mark-eclipse-v2.png's tighter ring geometry so the render's square boundary never shows.
-const MARK_MASK =
-  "radial-gradient(circle at 50% 50%, #000 47%, rgba(0, 0, 0, 0.4) 51%, transparent 56%)";
 
 /**
  * Static footer: contact, coverage, colophon. No motion, per docs/DESIGN-SPEC.md section 5.
@@ -31,14 +28,7 @@ export function Footer() {
           <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <Image
-                  src="/brand/mark-eclipse-v2.png"
-                  alt=""
-                  width={24}
-                  height={24}
-                  className="h-6 w-6"
-                  style={{ maskImage: MARK_MASK, WebkitMaskImage: MARK_MASK }}
-                />
+                <EclipseMark className="h-6 w-6" />
                 <span className="font-mono text-label uppercase text-text">HELIOS</span>
               </div>
               <p className="max-w-xs text-body text-text-2">

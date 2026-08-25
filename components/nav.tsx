@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef } from "react";
+import { EclipseMark } from "@/components/ui/eclipse-mark";
 import { Glass } from "@/components/ui/glass";
 import { useSpring } from "@/lib/motion/use-spring";
 import { useScrollProgress } from "@/lib/motion/use-scroll-progress";
@@ -11,11 +11,8 @@ import { WHATSAPP_HREF } from "@/lib/contact";
 const HIDDEN_Y = -96;
 const SPRING = { damping: 1, response: 0.5 }; // the bar arriving, not a gesture: no overshoot
 
-// Same load-bearing mask as components/hero.tsx, tuned for mark-eclipse-v2.png's tighter ring
 // geometry (the chrome ring's outer edge sits at ~44% of the image radius). Kept small at this
 // icon size, but the render's square boundary is still there without it.
-const MARK_MASK =
-  "radial-gradient(circle at 50% 50%, #000 47%, rgba(0, 0, 0, 0.4) 51%, transparent 56%)";
 
 interface NavProps {
   /** id of the section the nav should wait to clear before it springs in. Defaults to "hero". */
@@ -55,16 +52,15 @@ export function Nav({ heroId = "hero" }: NavProps) {
       inert={!visible}
     >
       <nav aria-label="Primary" className="w-full max-w-5xl">
-        <Glass className="flex items-center justify-between gap-4 px-4 py-2.5 sm:px-5">
+        <Glass
+          className="flex items-center justify-between gap-4 px-4 py-2.5 sm:px-5"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.93), rgba(244,248,255,0.96))",
+          }}
+        >
           <a href="#hero" className="flex items-center gap-2 rounded-md" aria-label="HELIOS, home">
-            <Image
-              src="/brand/mark-eclipse-v2.png"
-              alt=""
-              width={28}
-              height={28}
-              className="h-7 w-7 shrink-0"
-              style={{ maskImage: MARK_MASK, WebkitMaskImage: MARK_MASK }}
-            />
+            <EclipseMark className="h-7 w-7 shrink-0" />
             <span className="font-mono text-label uppercase text-text">HELIOS</span>
           </a>
 
