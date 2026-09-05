@@ -19,7 +19,14 @@ const instrumentSerif = Instrument_Serif({
 // separate client-facing HELIOS site: sharing is done by forwarding links, so a canonical or OG URL
 // belonging to another site makes every preview claim to be that site.
 // Update this if a custom domain is bought.
-const SITE_URL = "https://helios-portfolio.vercel.app";
+// The project's own production alias, verified as serving THIS site. It is not
+// helios-portfolio.vercel.app, which reads like the obvious guess and was what this said: that
+// subdomain belongs to an unrelated Vercel user (it currently serves a portfolio for someone
+// else entirely). Pointing metadataBase there made the canonical tag hand this page to a
+// stranger's domain and made every link preview claim to be their site, which is the same class
+// of mistake the note below is already about, just aimed at a different wrong host.
+// Update this if a custom domain is bought, and check what the host actually serves first.
+const SITE_URL = "https://helios-portfolio-lyart.vercel.app";
 const SITE_TITLE = "HELIOS, a web studio run by Aditya Mitter";
 const SITE_DESCRIPTION =
   "Your business, in its best light. HELIOS is the one-person web studio run by Aditya Mitter in London. See your homepage before you pay: a free mockup, no deposit.";
