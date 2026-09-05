@@ -15,18 +15,23 @@ const instrumentSerif = Instrument_Serif({
   display: "swap",
 });
 
-// This project's own deployment. It must never point at builtbyhelios.vercel.app, which is the
-// separate client-facing HELIOS site: sharing is done by forwarding links, so a canonical or OG URL
-// belonging to another site makes every preview claim to be that site.
-// Update this if a custom domain is bought.
-// The project's own production alias, verified as serving THIS site. It is not
-// helios-portfolio.vercel.app, which reads like the obvious guess and was what this said: that
-// subdomain belongs to an unrelated Vercel user (it currently serves a portfolio for someone
-// else entirely). Pointing metadataBase there made the canonical tag hand this page to a
-// stranger's domain and made every link preview claim to be their site, which is the same class
-// of mistake the note below is already about, just aimed at a different wrong host.
-// Update this if a custom domain is bought, and check what the host actually serves first.
-const SITE_URL = "https://helios-portfolio-lyart.vercel.app";
+// The one HELIOS site. There used to be two: this portfolio, and a separate client-facing
+// "Helios Studio" project that owned builtbyhelios.vercel.app. They have been merged, and this
+// repo is what that name now serves.
+//
+// The note that stood here said to never point at builtbyhelios.vercel.app, because at the time
+// it belonged to that other project and a canonical tag aimed there would have handed this page
+// to a site we did not control. That is no longer true: the alias was moved onto this project on
+// 2026-09-05, and the old target is recorded in the commit that did it.
+//
+// Do not point this at helios-portfolio.vercel.app, which is the obvious guess and is what this
+// said before. That subdomain belongs to an unrelated Vercel account and serves a stranger's
+// portfolio. helios-portfolio-lyart.vercel.app remains this project's auto-generated URL and
+// still works; builtbyhelios.vercel.app is the public one.
+//
+// Update this if a custom domain is bought, and check what the host actually serves first: both
+// mistakes above came from guessing at a name instead of fetching it.
+const SITE_URL = "https://builtbyhelios.vercel.app";
 const SITE_TITLE = "HELIOS, a web studio run by Aditya Mitter";
 const SITE_DESCRIPTION =
   "Your business, in its best light. HELIOS is the one-person web studio run by Aditya Mitter in London. See your homepage before you pay: a free mockup, no deposit.";
