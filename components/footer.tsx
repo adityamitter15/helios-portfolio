@@ -1,10 +1,8 @@
 import { ChromeRule } from "@/components/ui/chrome-rule";
-import { EclipseMark } from "@/components/ui/eclipse-mark";
+import { HeliosMark } from "@/components/ui/helios-mark";
 import { Glass } from "@/components/ui/glass";
 import { MailIcon, PhoneIcon, WhatsAppIcon } from "@/components/ui/icons";
 import { CALL_HREF, EMAIL, EMAIL_HREF, PHONE_DISPLAY, WHATSAPP_HREF } from "@/lib/contact";
-
-const COVERAGE = ["London", "Reading", "and remotely, anywhere in the UK"];
 
 // Same load-bearing mask as components/hero.tsx and components/nav.tsx, tuned for
 
@@ -28,7 +26,7 @@ export function Footer() {
           <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <EclipseMark className="h-6 w-6" />
+                <HeliosMark className="h-6 w-6" />
                 <span className="font-mono text-label uppercase text-text">HELIOS</span>
               </div>
               <p className="max-w-xs text-body text-text-2">
@@ -73,10 +71,16 @@ export function Footer() {
             </div>
 
             <div className="flex flex-col gap-3">
-              <h2 className="font-mono text-label uppercase text-text-2">Coverage</h2>
+              {/* This was a Coverage block reading "London, Reading, and remotely, anywhere in
+                  the UK". It was both unhelpful and untrue: the work is done online, and one of
+                  the four sites in the section above is byseema.in, an atelier whose domain is not
+                  even in this country. A service radius on a studio that has never needed one only
+                  talks a reader out of enquiring. What is left is who the work is for, which is the
+                  part that was actually doing any work. */}
+              <h2 className="font-mono text-label uppercase text-text-2">Who it&rsquo;s for</h2>
               <p className="text-body text-text-2">
-                {COVERAGE.join(", ")}. Showrooms, trades, ateliers, salons and clubs: any
-                high-street business.
+                Showrooms, trades, ateliers, salons and clubs: any independent business. It is all
+                built online, so where you are makes no difference to any of it.
               </p>
             </div>
           </div>

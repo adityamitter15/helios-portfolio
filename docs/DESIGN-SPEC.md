@@ -202,11 +202,12 @@ A desktop screenshot shrunk into a phone card is unreadable. That is a real defe
    zardozi, jamdani and patola, each photographed as a single piece.
    Tags: Catalogue / WhatsApp reserve / No checkout / Own domain
 
-4. **Daigaku Karate Kai**: `dkk-karate-london-b9f74.web.app`
-   One of the strongest Okinawan Goju Ryu clubs in the country, rebuilt from the ground up. A thirty-three
-   name black belt register with a page for every member, class times, the club's written history, and decades
-   of archive photography finally given somewhere to live.
-   Tags: Member register / Archive gallery / Club history / Static and fast
+4. **Daigaku Karate Kai**: `goju-karate.co.uk`
+   The oldest sports club at the University of Westminster, training continuously since 1990, rebuilt from
+   the ground up. A thirty-three name black belt register with a page for every member, a fight record of
+   sixteen wins from the club's first twenty professional cage fights, the written history from Okinawa to
+   Regent Street, and decades of archive photography finally given somewhere to live.
+   Tags: Member register / Fight record / Archive gallery / Own domain
 
 ### What you get, six cards
 

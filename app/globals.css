@@ -142,19 +142,81 @@
      wherever the ramp falls across it. Blue-cast rather than neutral grey, since chrome takes the
      colour of what it reflects and neutral grey reads as dirty next to the blue wash. */
   .chrome-text {
+    /* One highlight band travelling through dark metal, rather than the seven-stop static ramp
+       this used to be. The band peaks at #5A6E9C, which the note above establishes as the lightest
+       a glyph may land on while still holding roughly 5:1 on white, so the sweep never brightens
+       the wordmark past legibility at any point in its cycle.
+
+       The tile opens and closes on the same #16264A, and background-repeat tiles it, so the loop
+       has no seam: at one full tile of travel the gradient is pixel-identical to where it started.
+       Sized in em so the band scales with the wordmark instead of drifting as the hero type clamps
+       between 3.5rem and 10rem. */
+    /* The stops are variables rather than literals so a dark scope can re-point the ramp without
+       restating the geometry. .hero-void below is the only such scope today: over the black hole
+       this same ramp has to run BRIGHT, and a second copy of the rule would have been a second
+       place to keep the tile seamless and the timing in step. */
+    --chrome-a: #16264a;
+    --chrome-b: #22335c;
+    --chrome-c: #46598c;
+    --chrome-d: #5a6e9c;
+    --chrome-e: #2b3c66;
+
     background-image: linear-gradient(
-      145deg,
-      #16264a 0%,
-      #3d5185 18%,
-      #5a6e9c 34%,
-      #2b3c66 50%,
-      #16264a 64%,
-      #46598c 82%,
-      #22335c 100%
+      100deg,
+      var(--chrome-a) 0%,
+      var(--chrome-b) 18%,
+      var(--chrome-c) 32%,
+      var(--chrome-d) 42%,
+      var(--chrome-c) 52%,
+      var(--chrome-e) 66%,
+      var(--chrome-a) 100%
     );
+    background-size: 5em 100%;
+    background-repeat: repeat;
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
+  }
+
+  /* Gated on no-preference rather than relying on the global reduced-motion net at the bottom of
+     this file: that net collapses the duration to 0.01ms, which would leave the wordmark frozen at
+     whatever frame it happened to reach. Not declaring the animation at all leaves it at its
+     natural start instead, which is the full dark ramp. */
+  @media (prefers-reduced-motion: no-preference) {
+    .chrome-text {
+      animation: chrome-sweep 8s linear infinite;
+    }
+  }
+
+  @keyframes chrome-sweep {
+    to {
+      background-position-x: 5em;
+    }
+  }
+
+  /* Slow drift for the hero's aurora plate. A real background video was priced first and is not
+     viable — the cheapest video model quoted 22.5 credits against a 1.2 credit balance — so the
+     motion is done by moving a still instead. Over forty seconds it is not perceptible as movement,
+     only as the background never being quite where you left it, which is most of what a looping
+     background video actually buys.
+
+     alternate runs the keyframes backwards on every other pass, so the loop is seamless without the
+     start and end frames having to match. transform only, so it composites on the GPU and never
+     touches layout. */
+  @media (prefers-reduced-motion: no-preference) {
+    .aurora-drift {
+      animation: aurora-drift 44s ease-in-out infinite alternate;
+      will-change: transform;
+    }
+  }
+
+  @keyframes aurora-drift {
+    from {
+      transform: scale(1.05) translate3d(0, 0, 0);
+    }
+    to {
+      transform: scale(1.16) translate3d(-2.5%, 1.5%, 0);
+    }
   }
 
   /* Material dressing for the liquid-glass module (components/ui/glass.tsx). The module owns the
@@ -179,6 +241,95 @@
     .glass-pane {
       backdrop-filter: blur(14px) saturate(140%);
       -webkit-backdrop-filter: blur(14px) saturate(140%);
+    }
+  }
+
+  /* The dark scope, and the only one on the page. components/hero.tsx puts a raymarched black
+     hole behind the hero (components/ui/black-hole.tsx), so that one section has to invert while
+     everything below it stays daylight.
+
+     It is done by re-pointing the tokens rather than by restyling the hero's markup. Every
+     descendant already reads its colour through var(--color-*), so overriding the variables here
+     flips the section wholesale and, critically, flips components/ui/helios-mark.tsx too: the mark
+     is drawn from --color-accent, --color-chrome-* and --color-bloom-*, and it would otherwise
+     render its dark navy strokes into a black background and vanish. That is the payoff for the
+     mark being drawn rather than rendered, argued for at length in helios-mark.tsx, collected here.
+
+     Contrast, computed against the #04060C ground the canvas paints to. The disk is far brighter
+     than the ground, so the type side additionally carries a scrim (see hero.tsx) and these numbers
+     are what holds there:
+
+       --text on ground                18.35:1
+       --text-2 on ground              10.86:1
+       --accent on ground               9.86:1
+       --void on --accent-hi (button)  14.40:1
+       chrome sweep, darkest point       5.79:1   AA at any size, and the wordmark is display type
+  */
+  .hero-void {
+    --color-void: #04060c;
+    --color-surface: #0b1120;
+    --color-surface-2: #121a2e;
+    --color-line: rgba(173, 201, 240, 0.28);
+
+    --color-text: #eef4ff;
+    --color-text-2: #a9bfe4;
+
+    /* accent-hi is the BUTTON BACKGROUND and takes --color-void as its text, so on the dark scope
+       the pair has to invert outright: a light cyan plate with near-black type on it. Leaving the
+       daylight #0E47B0 here would have put a dark blue button on a black ground at about 1.6:1. */
+    --color-accent: #8ab6ff;
+    --color-accent-hi: #a5e2ff;
+    --color-glow: #16233d;
+
+    /* Metal runs bright here, the exact inverse of the reasoning in .chrome-text above. */
+    --color-chrome-hi: #ffffff;
+    --color-chrome-mid: #c3d5f5;
+    --color-chrome-lo: #7f9ac9;
+
+    color: var(--color-text);
+  }
+
+  /* Re-points the wordmark's ramp only; the geometry, tile size and 8s timing all stay in the one
+     .chrome-text rule. Opens and closes on --chrome-a exactly as the daylight ramp does, so the
+     tile is still seamless. */
+  .hero-void .chrome-text {
+    --chrome-a: #6f8ab8;
+    --chrome-b: #9db4dc;
+    --chrome-c: #dbe8ff;
+    --chrome-d: #ffffff;
+    --chrome-e: #8ba5cf;
+  }
+
+  /* The horizon. The hero ends on a hard edge against the white section below rather than fading
+     into it, because a #04060C-to-white gradient travels through grey, and a grey band across the
+     page is the exact failure this file already records twice (the 0.16-opacity dark backdrop, and
+     the aurora fog). A lit hairline instead reads as deliberate, and it says the same thing the
+     mark does: a sun cresting a horizon, light beginning at a line. */
+  .hero-void-horizon {
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--color-bloom-b) 30%,
+      var(--color-bloom-a) 50%,
+      var(--color-bloom-c) 70%,
+      transparent 100%
+    );
+  }
+
+  /* Replaces tailwindcss-animate's `animate-in fade-in`, which components/ui/coverflow-carousel.tsx
+     was written against and which is not a dependency here. Keyed remount replays it. */
+  .caption-in {
+    animation: caption-in 300ms ease-out both;
+  }
+
+  @keyframes caption-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
     }
   }
 

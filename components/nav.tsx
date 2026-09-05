@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { EclipseMark } from "@/components/ui/eclipse-mark";
+import { HeliosMark } from "@/components/ui/helios-mark";
 import { Glass } from "@/components/ui/glass";
 import { useSpring } from "@/lib/motion/use-spring";
 import { useScrollProgress } from "@/lib/motion/use-scroll-progress";
@@ -60,7 +60,7 @@ export function Nav({ heroId = "hero" }: NavProps) {
           }}
         >
           <a href="#hero" className="flex items-center gap-2 rounded-md" aria-label="HELIOS, home">
-            <EclipseMark className="h-7 w-7 shrink-0" />
+            <HeliosMark className="h-7 w-7 shrink-0" />
             <span className="font-mono text-label uppercase text-text">HELIOS</span>
           </a>
 

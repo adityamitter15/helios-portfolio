@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { EclipseMark } from "@/components/ui/eclipse-mark";
+import { BlackHole } from "@/components/ui/black-hole";
 import { Magnetic } from "@/components/ui/magnetic";
 import { useReducedMotion } from "@/lib/motion/use-reduced-motion";
 import { useScrollProgress } from "@/lib/motion/use-scroll-progress";
@@ -28,11 +28,11 @@ const ENTRANCE_SPRING = { damping: 1, response: 0.85 }; // slow settle reads as 
 
 const DELAY = {
   eyebrow: 0,
-  mark: 90,
-  heading: 170,
-  trade: 330,
-  lead: 490,
-  ctas: 630,
+  promise: 130,
+  heading: 210,
+  trade: 370,
+  lead: 510,
+  ctas: 650,
 } as const;
 
 /** Drives one entrance step's 0..1 progress: armed after its stagger delay, then springs up.
@@ -68,56 +68,100 @@ export function Hero() {
   const scrollProgress = useScrollProgress(sectionRef);
 
   const eyebrowP = useEntranceProgress(DELAY.eyebrow, reduced);
-  const markP = useEntranceProgress(DELAY.mark, reduced);
+  const promiseP = useEntranceProgress(DELAY.promise, reduced);
   const headingP = useEntranceProgress(DELAY.heading, reduced);
   const tradeP = useEntranceProgress(DELAY.trade, reduced);
   const leadP = useEntranceProgress(DELAY.lead, reduced);
   const ctaP = useEntranceProgress(DELAY.ctas, reduced);
 
-  // The mark's transform is written straight to the DOM in an effect rather than rendered as a
-  // style attribute. Its inputs (scroll position, spring progress) only exist on the client, so
-  // letting React render them produces a style string the server cannot reproduce, which is a
-  // hydration mismatch. Writing it imperatively means the server and the first client render agree
-  // on the markup exactly, and the animation takes over immediately afterwards.
-  const markRef = useRef<HTMLDivElement>(null);
+  // The scroll parallax the mark used to carry, now applied to the black hole, which is what
+  // occupies that slot. The transform is written straight to the DOM in an effect rather than
+  // rendered as a style attribute: its input only exists on the client, so letting React render it
+  // produces a style string the server cannot reproduce, which is a hydration mismatch. Writing it
+  // imperatively means the server and the first client render agree on the markup exactly.
+  //
+  // Scale stays at or above 1 and leads the translate, so the layer can never expose the section
+  // behind it as it drifts up.
+  const holeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const el = markRef.current;
+    const el = holeRef.current;
     if (!el) return;
     if (reduced) {
       el.style.transform = "";
-      el.style.opacity = "";
       return;
     }
-    // Its own entrance (a scale-in arriving with the wordmark) composed with the scroll parallax.
-    const scale = (0.86 + markP * 0.14) * (1 + scrollProgress * 0.14);
-    el.style.transform = `translate3d(0, ${scrollProgress * -64}px, 0) scale(${scale})`;
-    el.style.opacity = String(markP * (1 - scrollProgress * 0.35));
-  }, [markP, scrollProgress, reduced]);
+    el.style.transform =
+      `translate3d(0, ${scrollProgress * -40}px, 0) scale(${1 + scrollProgress * 0.15})`;
+  }, [scrollProgress, reduced]);
 
   return (
     <section
       ref={sectionRef}
       id="hero"
       aria-label="Introduction"
-      className="relative flex min-h-svh flex-col justify-center overflow-hidden px-6 pb-10 pt-16 sm:px-8 sm:pb-16 sm:pt-24"
+      className="hero-void relative isolate flex min-h-svh flex-col justify-center overflow-hidden
+        bg-void px-6 pb-10 pt-16 sm:px-8 sm:pb-16 sm:pt-24"
     >
-      {/* Hero backdrop. The render is a dark aurora made for the near-black theme, so on white it is
-          used at low opacity and feathered hard on every edge: enough to give the right side some
-          weather behind the mark, never a rectangle sitting on the page. It is anchored right so it
-          stays clear of the type on the left, where the contrast ratios have to hold. */}
+      {/* The black hole, components/ui/black-hole.tsx. A Schwarzschild geodesic integrator: every
+          pixel launches a photon and follows it through curved spacetime until it crosses the
+          horizon, hits the accretion disk, or escapes to the sky. The shadow, the ring of light
+          around it and the disk apparently folding over the top of the hole all fall out of that
+          one calculation rather than being drawn.
+
+          This replaces the two daylight layers that stood here, a stack of --color-bloom-*
+          gradients and /brand/aurora-daylight.jpg. Both were built for a white ground and neither
+          survives on black, so they are gone rather than dimmed: re-using art on a ground it was
+          not drawn for is the exact failure the note they carried was itself written about.
+
+          It costs no bytes and no request, and it follows the palette rather than freezing it. The
+          renderer's default ramp is already --color-bloom-b through --color-bloom-c over a
+          chrome-white core, which is why no palette prop is passed here.
+
+          It also removes itself when it should: a single still frame under prefers-reduced-motion,
+          and the render loop stops outright once the hero leaves the viewport, which on this page
+          is within a screen of scrolling. See the header of black-hole-utils/renderer.ts. */}
+      <div ref={holeRef} aria-hidden="true" className="absolute inset-0 -z-10 will-change-transform">
+        <BlackHole />
+      </div>
+
+      {/* Scrim over the type. The contrast ratios recorded for .hero-void in globals.css are true
+          of the #04060C GROUND, and the accretion disk is many times brighter than the ground, so
+          without this the eyebrow and lead would sit on whatever the disk happened to be doing at
+          that moment rather than on a known value.
+
+          There are two, because the type is in a completely different place in the two layouts and
+          a single gradient cannot serve both. Wide: the type is a narrow column on the left, so the
+          scrim is horizontal and the right of the frame stays clear for the hole. Narrow: the type
+          is one full-width block down the middle, so a horizontal scrim would leave the end of
+          every line unprotected; it runs vertically instead, holding the top of the frame open for
+          the hole and covering everything below it. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 right-0 z-0 w-full select-none opacity-[0.16] sm:w-[72%]"
+        className="pointer-events-none absolute inset-0 -z-10 sm:hidden"
         style={{
-          backgroundImage: "url(/brand/hero-backdrop.png)",
-          backgroundSize: "cover",
-          backgroundPosition: "center right",
-          maskImage:
-            "radial-gradient(115% 95% at 78% 45%, #000 12%, rgba(0,0,0,0.55) 46%, transparent 76%)",
-          WebkitMaskImage:
-            "radial-gradient(115% 95% at 78% 45%, #000 12%, rgba(0,0,0,0.55) 46%, transparent 76%)",
+          backgroundImage:
+            "linear-gradient(to bottom, transparent 0%, rgba(4,6,12,0.45) 16%, rgba(4,6,12,0.88) 38%, rgba(4,6,12,0.94) 100%)",
         }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 hidden sm:block"
+        style={{
+          backgroundImage: [
+            "linear-gradient(to right, #04060c 0%, rgba(4,6,12,0.86) 34%, rgba(4,6,12,0.35) 62%, transparent 88%)",
+            "linear-gradient(to top, rgba(4,6,12,0.72) 0%, transparent 42%)",
+          ].join(", "),
+        }}
+      />
+
+      {/* The horizon, globals.css .hero-void-horizon. The dark hero meets the white page below on
+          a lit hairline rather than a fade, for the reason recorded with that rule: the gradient
+          between those two grounds runs through grey, and a grey band is the failure this file
+          already threw one backdrop out over. */}
+      <div
+        aria-hidden="true"
+        className="hero-void-horizon pointer-events-none absolute inset-x-0 bottom-0 z-10 h-px"
       />
 
       {/* Text and mark are real flex siblings, not an absolutely positioned mark layered over a
@@ -131,19 +175,10 @@ export function Hero() {
           phones (the empty band above the type, never behind it), then sm:flex-row-reverse
           swaps the visual order so the type sits left and the mark right, without needing to
           reorder the markup. */}
-      <div className="relative z-10 flex w-full flex-col gap-10 sm:flex-row-reverse sm:items-center sm:justify-between sm:gap-10 lg:gap-16">
-        <div
-          className="relative aspect-square w-[56vw] max-w-[300px] shrink-0 self-center
-            sm:w-[34%] sm:max-w-[360px]
-            md:w-[36%] md:max-w-[420px]
-            lg:w-[34%] lg:max-w-[500px]
-            xl:max-w-[560px]"
-        >
-          <div ref={markRef} className="absolute inset-0">
-            <EclipseMark className="pointer-events-none h-full w-full select-none" />
-          </div>
-        </div>
-
+      {/* The type column, now the only child. It kept its narrow max-widths from when it shared
+          this row with the mark, which is still what we want: the column stays left, over the
+          scrimmed side, and the hole keeps the right of the frame to itself. */}
+      <div className="relative z-10 flex w-full flex-col gap-10">
         <div className="flex flex-col gap-10 sm:max-w-sm md:max-w-md lg:max-w-2xl">
           <div className="flex flex-col gap-5 sm:gap-6">
             <p
@@ -153,6 +188,27 @@ export function Hero() {
               HELIOS &middot; web studio, London
             </p>
 
+            {/* The tagline. Treated as the headline of the page, not as a caption to the wordmark.
+                A stranger has no reason to care that the studio is called HELIOS; they care what it
+                will do for them, so the promise is read first and the name signs it underneath.
+
+                Set in Instrument Serif italic against the sans used everywhere else, and in accent
+                blue against the ink, so it arrives as a different voice rather than as another line
+                of the same paragraph.
+
+                On scale: this was clamp(1.5rem, 3.4vw, 2.6rem), which left the tagline meaningfully
+                smaller than the studio name and made the page lead with identity instead of offer.
+                It is now close to the wordmark's weight without passing it. It deliberately does not
+                take the hero scale outright: hero.tsx has carried a note since v1 that Aditya Mitter
+                rendering small was flagged as a defect twice, so the name keeps its billing and the
+                tagline earns dominance through position, colour and voice instead of pure size. */}
+            <p
+              className="font-serif-italic text-[clamp(2rem,4.8vw,3.9rem)] leading-[1.08] tracking-[-0.015em] text-accent"
+              style={textEntranceStyle(promiseP, reduced)}
+            >
+              Your business, in its best light.
+            </p>
+
             <h1 className="text-hero text-text" style={textEntranceStyle(headingP, reduced)}>
               <span className="chrome-text">HELIOS</span>
               <br />
@@ -160,11 +216,16 @@ export function Hero() {
             </h1>
 
             <p className="text-h3 text-text" style={textEntranceStyle(tradeP, reduced)}>
-              I build websites for small businesses.
+              I design and build websites for independent businesses.
             </p>
 
+            {/* Rewritten from "See it before you pay: a free homepage mockup, no deposit." Same
+                offer, said with more conviction: second person and imperative rather than a colon
+                and a noun phrase, and the two guarantees stated flat rather than tucked in as an
+                aside. The offer is the strongest thing this studio has; it should not read like
+                a footnote to itself. */}
             <p className="text-lead text-text-2" style={textEntranceStyle(leadP, reduced)}>
-              See it before you pay: a free homepage mockup, no deposit.
+              See your homepage before you pay. No deposit, no contract.
             </p>
           </div>
 

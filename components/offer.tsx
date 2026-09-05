@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRef } from "react";
 import { Glass } from "@/components/ui/glass";
 import { Magnetic } from "@/components/ui/magnetic";
@@ -11,16 +10,25 @@ import { WHATSAPP_HREF } from "@/lib/contact";
 
 const PARALLAX_RANGE_PX = 64;
 
-// docs/DESIGN-SPEC-V2.md section 8: the aurora field, a much better fit for the cobalt theme than
-// the old refraction blade, which was tuned for the near-black v1 ground and reads as a grey
-// smudge here.
-const TEXTURE_SRC = "/brand/texture-aurora.png";
+// The aurora field for this band, docs/DESIGN-SPEC-V2.md section 8.
+//
+// This was /brand/texture-aurora.png, and its own comment recorded that it replaced an earlier
+// render which "reads as a grey smudge here" once the ground changed underneath it. The same thing
+// then happened again: that file is a saturated dark cobalt texture picked for the cobalt theme,
+// the ground is now white, and holding a dark render at 0.22 opacity over white desaturates it
+// toward grey rather than lightening it. Twice is a pattern, and the pattern is that a raster
+// cannot follow the palette.
+//
+// So it is composed from --color-bloom-* instead. It is light-on-white by construction, it moves
+// with the theme, there is no raster boundary left to feather away, and the band no longer ships
+// 1.8MB to draw a blur.
+const TEXTURE_LAYERS = [
+  "radial-gradient(46% 58% at 24% 34%, var(--color-bloom-a) 0%, transparent 66%)",
+  "radial-gradient(54% 62% at 72% 30%, var(--color-bloom-b) 0%, transparent 64%)",
+  "radial-gradient(50% 56% at 52% 78%, var(--color-bloom-c) 0%, transparent 68%)",
+].join(", ");
 
-// Every generated render's ground is a lighter mid-blue than --color-void, so a plain <img> shows
-// a visible rectangular edge. On the cobalt ground that edge is more obvious, not less, so the
-// mask is mandatory here (docs/DESIGN-SPEC-V2.md section 2 and section 8), same technique as the
-// eclipse mark in components/hero.tsx: a radial fade that feathers the render into the ground
-// rather than letting its raster boundary show.
+// Kept: the band still feathers at its edges so the field ends in air rather than at a rectangle.
 const TEXTURE_MASK =
   "radial-gradient(ellipse 75% 65% at 50% 42%, #000 40%, rgba(0, 0, 0, 0.35) 68%, transparent 88%)";
 
@@ -52,15 +60,12 @@ export function Offer() {
       aria-label="Offer"
       className="relative isolate overflow-hidden bg-surface py-24 sm:py-32"
     >
-      <Image
-        src={TEXTURE_SRC}
-        alt=""
-        width={1376}
-        height={768}
-        sizes="100vw"
-        className="pointer-events-none absolute inset-x-0 -top-[12%] z-0 h-[124%] w-full select-none object-cover will-change-transform"
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 -top-[12%] z-0 h-[124%] w-full select-none will-change-transform"
         style={{
-          opacity: 0.22,
+          backgroundImage: TEXTURE_LAYERS,
+          opacity: 0.62,
           maskImage: TEXTURE_MASK,
           WebkitMaskImage: TEXTURE_MASK,
           ...parallaxStyle,
