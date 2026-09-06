@@ -97,6 +97,7 @@ const COVERFLOW_SLIDES: CoverflowSlide[] = Array.from({ length: CAROUSEL_TURNS }
     title: project.name,
     subtitle: project.domain,
     tint: project.tint,
+    href: project.href,
   })),
 );
 
@@ -225,6 +226,8 @@ export function Work() {
           slides={COVERFLOW_SLIDES}
           aspectRatio={1440 / 900}
           cardWidth="clamp(196px, 52vw, 340px)"
+          autoplayMs={2600}
+          scrollSpeed={1.6}
           showCaption
           label="Client sites"
         />

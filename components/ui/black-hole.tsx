@@ -68,9 +68,15 @@ export function BlackHole({ className, quality, palette, exposure, center }: Bla
           ].join(", "),
         }}
       />
+      {/* pointer-events-auto against the wrapper's none, and only on the canvas: the fallback
+          gradient underneath stays inert. touch-pan-y rather than the registry's touch-none --
+          none would let a finger steer the hole but would also make the hero a region of the page
+          that cannot be scrolled past, which on a full-height hero means trapping the reader at
+          the top of the site. pan-y gives the browser every vertical gesture and keeps the
+          horizontal ones for the camera. */}
       <canvas
         ref={canvasRef}
-        className="relative block h-full w-full touch-none"
+        className="pointer-events-auto relative block h-full w-full touch-pan-y"
         style={{ opacity: failed ? 0 : 1 }}
       />
     </div>

@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { useReducedMotion } from "@/lib/motion/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
 /**
@@ -61,6 +62,10 @@ export interface CoverflowCarouselProps {
   aspectRatio?: number;
   /** Space between cards, as a fraction of card width. */
   gap?: number;
+  /** Milliseconds between automatic steps. 0 or omitted leaves it still. */
+  autoplayMs?: number;
+  /** Cards turned per 1000px of page scroll while the carousel is in view. 0 disables. */
+  scrollSpeed?: number;
   loop?: boolean;
   showCaption?: boolean;
   showPagination?: boolean;
@@ -81,6 +86,8 @@ export function CoverflowCarousel({
   cardWidth = "clamp(148px, 22vw, 260px)",
   aspectRatio = 1,
   gap = 0.05,
+  autoplayMs = 0,
+  scrollSpeed = 0,
   loop = true,
   showCaption = false,
   showPagination = false,
@@ -110,6 +117,21 @@ export function CoverflowCarousel({
   } | null>(null);
 
   const [selected, setSelected] = React.useState(0);
+  const reduced = useReducedMotion();
+
+  /** True once a pointer has travelled far enough to count as a drag, so the card it started on
+   *  does not also fire its link on release. Reset on every pointerdown. */
+  const movedRef = React.useRef(false);
+  const hoverRef = React.useRef(false);
+  /**
+   * Starts true, not false. IntersectionObserver only reports on a rendering opportunity, so a
+   * document that is not being painted -- a background tab, an occluded window, a headless capture
+   * -- may never deliver the first callback at all. Defaulting to false means the gate below never
+   * opens and the carousel silently never moves, which is a far worse failure than the opposite:
+   * defaulting to true costs at most a few steps of an off-screen carousel before the observer
+   * corrects it on the first frame that actually renders.
+   */
+  const inViewRef = React.useRef(true);
 
   /** Nearest whole card, folded back into 0..count-1. */
   const indexAt = React.useCallback(
@@ -208,6 +230,7 @@ export function CoverflowCarousel({
       rafRef.current = null;
     }
     event.currentTarget.setPointerCapture(event.pointerId);
+    movedRef.current = false;
     targetRef.current = posRef.current;
     dragRef.current = {
       id: event.pointerId,
@@ -228,7 +251,10 @@ export function CoverflowCarousel({
 
     // A few pixels of slop before this counts as a drag, so that a card carrying a link is not
     // robbed of its click by the tremor in an ordinary tap.
-    if (Math.abs(event.clientX - drag.x) > 4) drag.moved = true;
+    if (Math.abs(event.clientX - drag.x) > 4) {
+      drag.moved = true;
+      movedRef.current = true;
+    }
 
     const now = performance.now();
     const previous = posRef.current;
@@ -250,6 +276,83 @@ export function CoverflowCarousel({
     const carried = Math.max(-2, Math.min(2, drag.v * 0.18));
     settle(clamp(Math.round(posRef.current + carried)));
   };
+
+  /** Whether the carousel is on screen. Both the autoplay and the scroll drive below are gated on
+   *  it, so a carousel four sections down is not quietly stepping through itself all visit. */
+  React.useEffect(() => {
+    const el = frameRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        inViewRef.current = entry.isIntersecting;
+      },
+      { threshold: 0.15 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  /**
+   * Autoplay. It moves on its own so the rake is legible as motion rather than as a still frame
+   * that happens to be in perspective, and so it is obvious the thing can be moved at all.
+   *
+   * It yields to everything: a drag in progress, a pointer resting on it, being scrolled off
+   * screen, a backgrounded tab, and prefers-reduced-motion. It steps rather than drifts, reusing
+   * nudge, so the ring always comes to rest on a card instead of parking between two.
+   */
+  React.useEffect(() => {
+    if (!autoplayMs || reduced) return;
+    const id = setInterval(() => {
+      if (dragRef.current || hoverRef.current || !inViewRef.current) return;
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      nudge(1);
+    }, autoplayMs);
+    return () => clearInterval(id);
+  }, [autoplayMs, nudge, reduced]);
+
+  /**
+   * Scrolling the page turns the ring, while the carousel is in view.
+   *
+   * Deliberately driven by scroll DELTA rather than by the section's progress through the
+   * viewport: progress would pin a given scroll position to a given card, so scrolling back up
+   * would rewind it and the carousel could never be anywhere the scrollbar disagreed with. Delta
+   * just adds to wherever it already is, which composes with the autoplay and with dragging
+   * instead of fighting them.
+   *
+   * The page keeps scrolling normally throughout: this reads the scroll, it never swallows it.
+   */
+  React.useEffect(() => {
+    if (!scrollSpeed || reduced || typeof window === "undefined") return;
+
+    let last = window.scrollY;
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - last;
+      last = y;
+      if (!inViewRef.current || dragRef.current) return;
+
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      posRef.current = clamp(posRef.current + (delta / 1000) * scrollSpeed);
+      targetRef.current = posRef.current;
+      setSelected(indexAt(posRef.current));
+      paint();
+
+      // Snap to the nearest card once the scroll stops, so it never rests half-turned.
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(() => settle(clamp(Math.round(posRef.current))), 140);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      clearTimeout(settleTimer);
+    };
+  }, [clamp, indexAt, paint, reduced, scrollSpeed, settle]);
 
   // Card width drives pitch, depth and perspective, so it is the only thing
   // worth measuring — and only when the box actually changes.
@@ -291,6 +394,12 @@ export function CoverflowCarousel({
         <div
           ref={frameRef}
           tabIndex={0}
+          onPointerEnter={() => {
+            hoverRef.current = true;
+          }}
+          onPointerLeave={() => {
+            hoverRef.current = false;
+          }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
@@ -360,6 +469,31 @@ export function CoverflowCarousel({
                   decoding="async"
                   className="h-full w-full select-none object-cover object-top"
                 />
+
+                {/* The link sits OVER the image rather than wrapping it. Wrapping would put an
+                    anchor between the card and its <img>, and the card measures itself through
+                    that subtree; an inline anchor's box is not the card's box, so the pitch and
+                    the rake would have been computed from the wrong width.
+
+                    onClick guards against a drag ending on this card: a pointer that travelled
+                    more than a few pixels was steering the ring, and releasing it should not also
+                    open a site. Without that, every flick on a phone opens whatever it let go of. */}
+                {slide.href && (
+                  <a
+                    href={slide.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(event) => {
+                      if (movedRef.current) event.preventDefault();
+                    }}
+                    onDragStart={(event) => event.preventDefault()}
+                    className="absolute inset-0 rounded-2xl"
+                  >
+                    <span className="sr-only">
+                      {slide.title ?? slide.alt}, opens in a new tab
+                    </span>
+                  </a>
+                )}
               </div>
             ))}
           </div>

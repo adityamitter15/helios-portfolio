@@ -341,17 +341,58 @@ export function createRenderer(options: CreateRendererOptions): BlackHoleRendere
 
   // ------------------------------------------------------------------ listeners
 
+  /**
+   * Two different gestures, because a mouse and a finger mean different things.
+   *
+   * A mouse hovers, so it steers by absolute position: wherever the cursor is over the hero is
+   * where the camera looks. There is no hover on a touch screen, so a finger steers by DRAG
+   * instead, moving the camera relative to where it already was.
+   *
+   * An earlier revision simply ignored touch, which fixed a real bug -- pointermove fires for
+   * touch, so treating a scroll drag as a hover swung the camera under the reader's thumb -- but
+   * at the cost of the interaction entirely. Requiring a press first is what separates the two:
+   * a scroll never begins with a press on the canvas being tracked, and a deliberate drag does.
+   *
+   * The canvas is touch-action: pan-y (see black-hole.tsx), so the browser hands us a horizontal
+   * gesture and keeps a vertical one for scrolling the page. The hero can therefore be steered
+   * without ever becoming somewhere the page cannot be scrolled past.
+   */
+  let dragPointer: number | null = null;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let dragBaseX = 0;
+  let dragBaseY = 0;
+
+  const handlePointerDown = (event: PointerEvent) => {
+    if (reduced || event.pointerType === "mouse") return;
+    dragPointer = event.pointerId;
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
+    dragBaseX = targetX;
+    dragBaseY = targetY;
+  };
+
+  const handlePointerEnd = (event: PointerEvent) => {
+    if (dragPointer === event.pointerId) dragPointer = null;
+  };
+
   const handlePointer = (event: PointerEvent) => {
     if (reduced) return;
-    // Mouse only. pointermove fires for touch too, so on a phone every scroll drag over the hero
-    // swung the camera under the reader's thumb — and because the listener is on window, it did so
-    // even once the finger had left the canvas. There is no hover on touch, so there is nothing
-    // this parallax can mean there.
-    if (event.pointerType !== "mouse") return;
     const rect = canvas.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
-    targetX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    targetY = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+
+    if (event.pointerType === "mouse") {
+      targetX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      targetY = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+      return;
+    }
+
+    if (dragPointer !== event.pointerId) return;
+    // 2.5 rather than 2, so a drag across the canvas travels a little further than the camera's
+    // full range and the hole keeps up with the finger instead of lagging behind it.
+    const clamp1 = (v: number) => Math.max(-1, Math.min(1, v));
+    targetX = clamp1(dragBaseX + ((event.clientX - dragStartX) / rect.width) * 2.5);
+    targetY = clamp1(dragBaseY + ((event.clientY - dragStartY) / rect.height) * 2.5);
   };
 
   const handleVisibility = () => {
@@ -502,6 +543,11 @@ export function createRenderer(options: CreateRendererOptions): BlackHoleRendere
     // turned the preference OFF mid-visit never got the listener at all, because setup had already
     // run and only the flag changed.
     window.addEventListener("pointermove", handlePointer, { passive: true });
+    // Down on the canvas only, so a drag has to START on the hero to steer it. Up and cancel on
+    // the window, so releasing outside the canvas still ends the drag rather than stranding it.
+    canvas.addEventListener("pointerdown", handlePointerDown, { passive: true });
+    window.addEventListener("pointerup", handlePointerEnd, { passive: true });
+    window.addEventListener("pointercancel", handlePointerEnd, { passive: true });
     motionQuery?.addEventListener("change", handleMotionChange);
     resizeObserver?.observe(canvas);
     intersectionObserver?.observe(canvas);
@@ -523,6 +569,9 @@ export function createRenderer(options: CreateRendererOptions): BlackHoleRendere
       canvas.removeEventListener("webglcontextrestored", handleContextRestored);
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("pointermove", handlePointer);
+      canvas.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("pointerup", handlePointerEnd);
+      window.removeEventListener("pointercancel", handlePointerEnd);
       motionQuery?.removeEventListener("change", handleMotionChange);
       resizeObserver?.disconnect();
       intersectionObserver?.disconnect();
