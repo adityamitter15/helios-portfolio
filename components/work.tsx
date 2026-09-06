@@ -212,13 +212,19 @@ export function Work() {
           The desktop pinned track is untouched. It only initialises inside DESKTOP_QUERY (see the
           effect above), so hiding its container below lg cannot interfere with the pin. */}
       <div className="mt-12 lg:hidden">
-        {/* Deliberately close to the registry's own defaults for rotate, depth, falloff and gap:
-            those numbers are what produce the rake, and the first pass here overrode them with a
-            single card at 62vw, which left one screenshot filling the frame and no stack behind it.
-            Square cards, cropped from the top, are the registry proportions too — a 16:10 card
-            wide enough to read as a browser window is a card too wide to see six of. */}
+        {/* Close to the registry's own defaults for rotate, depth, falloff and gap, because those
+            numbers are what produce the rake.
+
+            The aspect is NOT the registry's square, though. These are 1440x900 screenshots, and a
+            square card crops 37% of the width off every one of them: the nav loses its right-hand
+            end, centred hero type stops being centred, and a page built to be looked at wide gets
+            shown as a tall slice of itself. Square suits the album art the component was written
+            for and actively misrepresents a website. At 16:10 the card is the crop -- nothing is
+            cut at all -- and it reads as a browser window, which is the thing being sold. */}
         <CoverflowCarousel
           slides={COVERFLOW_SLIDES}
+          aspectRatio={1440 / 900}
+          cardWidth="clamp(196px, 52vw, 340px)"
           showCaption
           label="Client sites"
         />

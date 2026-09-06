@@ -263,7 +263,7 @@ vec3 starField(vec3 dir) {
 
 // ---------------------------------------------------------------- geodesic integration
 
-vec3 trace(vec3 ro, vec3 rd) {
+vec3 trace(vec3 ro, vec3 rd, float pixelAngle) {
   vec3 pos = ro;
   vec3 vel = rd;
 
@@ -271,10 +271,6 @@ vec3 trace(vec3 ro, vec3 rd) {
   // acceleration term and h2 can be hoisted out of the loop.
   vec3 h = cross(pos, vel);
   float h2 = dot(h, h);
-
-  // Angular size of one pixel, matching the 1.75 focal length used to build rd in main(). This is
-  // what lets the disk sampling scale its detail to the resolution actually being rendered.
-  float pixelAngle = 2.0 / (uResolution.y * 1.75);
 
   vec3 acc = vec3(0.0);
   float trans = 1.0;
@@ -378,12 +374,27 @@ void main() {
   float yaw   = 0.075 * sin(uTime * 0.063) + uPointer.x * 0.30;
   float pitch = 0.155 + uPointer.y * 0.10;
 
-  vec3 ro = vec3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch)) * 17.0;
+  // Framing follows the shape of the canvas.
+  //
+  // The disk runs out to r = 13 while the shadow is only about 2.6 across, so it is roughly five
+  // times the width of the thing at the centre of it. On a wide canvas the fixed 1.75 lens at a
+  // distance of 17 fits that comfortably. On a phone, where the hero is a tall narrow window, the
+  // horizontal field of view collapses and both arms of the disk run off the edges -- what is left
+  // on screen is a black disc with a sliver of ring, which is not a black hole, it is a hole.
+  //
+  // So the lens widens and the camera pulls back as the canvas gets narrower. Both are clamped so
+  // that a wide canvas resolves to exactly the previous 1.75 and 17.0 and its framing is untouched.
+  float focal = min(1.75, max(1.0, aspect * 2.2));
+  float dist = 17.0 * clamp(1.3 / aspect, 1.0, 1.5);
+
+  vec3 ro = vec3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch)) * dist;
   vec3 fwd = normalize(-ro);
   vec3 rgt = normalize(cross(vec3(0.0, 1.0, 0.0), fwd));
   vec3 up  = cross(fwd, rgt);
 
-  vec3 col = trace(ro, normalize(fwd * 1.75 + rgt * uv.x + up * uv.y));
+  // Angular size of one pixel, which is what lets the disk sampling scale its detail to the
+  // resolution being rendered. It has to track the focal length, not the old constant.
+  vec3 col = trace(ro, normalize(fwd * focal + rgt * uv.x + up * uv.y), 2.0 / (uResolution.y * focal));
 
   col = aces(col * uExposure);
 

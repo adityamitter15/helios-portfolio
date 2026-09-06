@@ -132,7 +132,18 @@ function CraftItem({ icon: Icon, title, body, index }: CraftItemProps) {
  */
 export function Craft() {
   return (
-    <section id="craft" aria-label="What you get" className="px-6 py-24 sm:px-8 sm:py-32">
+    /* overflow-x-hidden is load-bearing, not tidiness. The six items below enter from alternating
+       sides by translating TRAVEL_PX horizontally, and their resting state is only reached after
+       they reveal. On a wide layout the grid has slack either side to absorb that; at 390px a card
+       is already the full column, so the odd-indexed ones sat 56px past the right edge and made the
+       whole DOCUMENT scroll sideways -- on a section most readers had not even reached yet, since
+       the offset is where the card waits, not where it passes through. Clipping here keeps the
+       cascade exactly as designed and stops it reaching the page. */
+    <section
+      id="craft"
+      aria-label="What you get"
+      className="overflow-x-hidden px-6 py-24 sm:px-8 sm:py-32"
+    >
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
         <Reveal className="flex flex-col gap-4">
           <h2 className="font-mono text-label uppercase text-text-2">What you get</h2>
